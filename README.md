@@ -10,7 +10,17 @@ I have tested on:
 
 * PyTorch 1.3.1
 * CUDA 10.1/10.2
-* OpenCV
+* OpenCV - Refer to [this dockerfile](https://github.com/pytorch/extension-script/blob/master/Dockerfile) for installation of correct version
+* Libtorch 1.4 (pre-C++11) [download here](https://pytorch.org/get-started/locally/)
+
+### Build custom torchscript operators
+We have built a number of torchscript operators using OpenCV and libtorch, you will have to have downloaded libtorch and installed the correct version of OpenCV for this to work. See requirements above or [refer to the tutorial for writing your own torchscript operators](https://pytorch.org/tutorials/advanced/torch_script_custom_ops.html) for me details. 
+
+To build the custom operators you can use the bash script accompanying with the path the your downloaded and unzipped libtorch code
+
+> chmod +x ./build_custom_trasnforms.sh
+
+> ./build_custom_transforms.sh /path/to/libtorch
 
 ### Project images to latent spaces
 
