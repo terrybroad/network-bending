@@ -2,14 +2,14 @@
 
 Software reposity for code for paper "Network Bending: manipulating feature activations in GANs"
 
-Code is based on this [StyleGAN2 pytorch implementation](https://github.com/rosinality/stylegan2-pytorch) by rosinality.
+Code is based on this [StyleGAN2 pytorch implementation](https://github.com/rosinality/stylegan2-pytorch) by rosinality. You can refer to this codebase for training your own models, or converting models from the official tensorflow implementation. 
 
 ## Requirements
 
 I have tested on:
 
-* PyTorch 1.3.1
-* CUDA 10.1/10.2
+* PyTorch 1.4.0
+* CUDA 10.1
 * OpenCV - Refer to [this dockerfile](https://github.com/pytorch/extension-script/blob/master/Dockerfile) for installation of correct version
 * Libtorch 1.4 (pre-C++11) [download here](https://pytorch.org/get-started/locally/)
 
