@@ -131,3 +131,54 @@ dmypy.json
 wandb/
 *.lmdb/
 *.pkl
+
+
+### Output and Cache Directories ###
+/External/
+/Debug/
+/Docs/
+/Release/
+/build/
+/bin/
+/out/
+/cmake-build-*/
+
+### CMake ###
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
+### C++ ###
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Comment this line if you want to version Wavefront .obj files.
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
