@@ -23,9 +23,9 @@ class Erode(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                feat = torch.ops.my_ops.erode(d_,params[0])
-                feat = torch.unsqueeze(torch.unsqueeze(feat,0),0)
-                x_array[i] = feat
+                tf = torch.ops.my_ops.erode(d_,params[0])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
         return torch.cat(x_array,1)
 
 class Dilate(nn.Module):
@@ -41,9 +41,9 @@ class Dilate(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                feat = torch.ops.my_ops.dilate(d_,params[0])
-                feat = torch.unsqueeze(torch.unsqueeze(feat,0),0)
-                x_array[i] = feat
+                tf = torch.ops.my_ops.dilate(d_,params[0])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
         return torch.cat(x_array,1)
 
 class Translate(nn.Module):
@@ -59,9 +59,9 @@ class Translate(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                feat = torch.ops.my_ops.translate(d_,params[0], params[1])
-                feat = torch.unsqueeze(torch.unsqueeze(feat,0),0)
-                x_array[i] = feat
+                tf = torch.ops.my_ops.translate(d_,params[0], params[1])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
         return torch.cat(x_array,1)
 
 class Scale(nn.Module):
@@ -76,9 +76,9 @@ class Scale(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                feat = torch.ops.my_ops.scale(d_,params[0])
-                feat = torch.unsqueeze(torch.unsqueeze(feat,0),0)
-                x_array[i] = feat
+                tf = torch.ops.my_ops.scale(d_,params[0])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
         return torch.cat(x_array,1)
 
 class Rotate(nn.Module):
@@ -93,9 +93,57 @@ class Rotate(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                feat = torch.ops.my_ops.rotate(d_,params[0])
-                feat = torch.unsqueeze(torch.unsqueeze(feat,0),0)
-                x_array[i] = feat
+                tf = torch.ops.my_ops.rotate(d_,params[0])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
+        return torch.cat(x_array,1)
+
+class FlipHorizontal(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            if i in indicies:
+                d_ = torch.squeeze(dim)
+                tf = d_.flip([3])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
+        return torch.cat(x_array,1)
+
+class Invert(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            if i in indicies:
+                d_ = torch.squeeze(dim)
+                ones = torch.ones(d_.size(), dtype=d_.dtype, layout=d_.layout, device=d_.device)
+                tf = ones - d_
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
+        return torch.cat(x_array,1)
+
+class BinaryThreshold(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        if(not isInstance(params[0], float) or params[0] < -1 or params[0] > 1):
+            print('Binary threshold parameter should be a float between -1 and 1.')
+            raise ValueError
+
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            if i in indicies:
+                d_ = torch.squeeze(dim)
+                t = Variable(torch.Tensor([params[0]]))
+                tf = (d_ > t).float() * 1
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
         return torch.cat(x_array,1)
 
 class ManipulationLayer(nn.Module):
