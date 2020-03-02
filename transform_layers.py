@@ -112,6 +112,20 @@ class FlipHorizontal(nn.Module):
                 x_array[i] = tf
         return torch.cat(x_array,1)
 
+class FlipVertical(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            if i in indicies:
+                d_ = torch.squeeze(dim)
+                tf = d_.flip([2])
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
+        return torch.cat(x_array,1)
+
 class Invert(nn.Module):
     def __init__(self):
         super().__init__()
@@ -182,10 +196,33 @@ class ManipulationLayer(nn.Module):
     def __init__(self, layerID):
         super().__init__()
         self.layerID = layerID
-        layer_options = {
-            "erode" : self.erode
-        }
+        
+        # layers
         self.erode = Erode()
+        self.dilate = Dilate()
+        self.translate = Translate()
+        self.scale = Scale()
+        self.rotate = Rotate()
+        self.flip_h = FlipHorizontal()
+        self.flip_v = FlipVertical()
+        self.invert = Invert()
+        self.binary_thresh = BinaryThreshold()
+        self.scalar_multiply = ScalarMultiply()
+        self.ablate = Ablate()
+        
+        layer_options = {
+            "erode" : self.erode,
+            "dilate": self.dilate,
+            "translate": self.translate,
+            "scale": self.scale,
+            "rotate": self.rotate,
+            "flip-horizontal": self.flip_h,
+            "flip-vertical": self.flip_v,
+            "invert": self.invert,
+            "binary-thresh": self.binary_thresh,
+            "scalar-multiply": self.scalar_multiply,
+            "ablate": self.ablate
+        }
 
     def forward(self, input, tranforms_dict):
         out = input
