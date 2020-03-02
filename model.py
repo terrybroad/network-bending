@@ -10,6 +10,7 @@ from torch.autograd import Function
 
 from op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d
 
+from transform_layers import all
 
 class PixelNorm(nn.Module):
     def __init__(self):
@@ -314,6 +315,7 @@ class StyledConv(nn.Module):
         upsample=False,
         blur_kernel=[1, 3, 3, 1],
         demodulate=True,
+        layerID=-1
     ):
         super().__init__()
 
@@ -331,13 +333,14 @@ class StyledConv(nn.Module):
         # self.bias = nn.Parameter(torch.zeros(1, out_channel, 1, 1))
         # self.activate = ScaledLeakyReLU(0.2)
         self.activate = FusedLeakyReLU(out_channel)
+        self.manipulation = ManipulationLayer(layerID)
 
-    def forward(self, input, style, noise=None):
+    def forward(self, input, style, noise=None, transform_dict={}):
         out = self.conv(input, style)
         out = self.noise(out, noise=noise)
         # out = out + self.bias
         out = self.activate(out)
-
+        out = self.manipulation(out, transform_dict)
         return out
 
 
