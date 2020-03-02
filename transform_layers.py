@@ -164,6 +164,20 @@ class ScalarMultiply(nn.Module):
                 x_array[i] = tf
         return torch.cat(x_array,1)
 
+class Ablate(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            if i in indicies:
+                d_ = torch.squeeze(dim)
+                t = d_ * 0
+                tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
+        return torch.cat(x_array,1)
+
 class ManipulationLayer(nn.Module):
     def __init__(self, layerID):
         super().__init__()
