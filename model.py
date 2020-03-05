@@ -335,12 +335,12 @@ class StyledConv(nn.Module):
         self.activate = FusedLeakyReLU(out_channel)
         self.manipulation = ManipulationLayer(layerID)
 
-    def forward(self, input, style, noise=None, transform_dict={}):
+    def forward(self, input, style, noise=None, transform_dict_list=[]):
         out = self.conv(input, style)
         out = self.noise(out, noise=noise)
         # out = out + self.bias
         out = self.activate(out)
-        out = self.manipulation(out, transform_dict)
+        out = self.manipulation(out, transform_dict_list)
         return out
 
 
@@ -489,6 +489,7 @@ class Generator(nn.Module):
         input_is_latent=False,
         noise=None,
         randomize_noise=True,
+        transform_dict_list=[]
     ):
         if not input_is_latent:
             styles = [self.style(s) for s in styles]
@@ -538,8 +539,8 @@ class Generator(nn.Module):
         for conv1, conv2, noise1, noise2, to_rgb in zip(
             self.convs[::2], self.convs[1::2], noise[1::2], noise[2::2], self.to_rgbs
         ):
-            out = conv1(out, latent[:, i], noise=noise1)
-            out = conv2(out, latent[:, i + 1], noise=noise2)
+            out = conv1(out, latent[:, i], noise=noise1, transform_dict_list=transform_dict_list)
+            out = conv2(out, latent[:, i + 1], noise=noise2, transform_dict_list=transform_dict_list)
             skip = to_rgb(out, latent[:, i + 2], skip)
 
             i += 2
