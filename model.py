@@ -10,7 +10,7 @@ from torch.autograd import Function
 
 from op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d
 
-from transform_layers import all
+from transform_layers import *
 
 class PixelNorm(nn.Module):
     def __init__(self):
@@ -404,11 +404,13 @@ class Generator(nn.Module):
             512: 32 * channel_multiplier,
             1024: 16 * channel_multiplier,
         }
-
+        
+        layer_index = 0
         self.input = ConstantInput(self.channels[4])
         self.conv1 = StyledConv(
-            self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel
+            self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel, layerID=layer_index
         )
+        layer_index += 1
         self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
 
         self.log_size = int(math.log(size, 2))
@@ -425,7 +427,7 @@ class Generator(nn.Module):
             res = (layer_idx + 5) // 2
             shape = [1, 1, 2 ** res, 2 ** res]
             self.noises.register_buffer(f'noise_{layer_idx}', torch.randn(*shape))
-
+     
         for i in range(3, self.log_size + 1):
             out_channel = self.channels[2 ** i]
 
@@ -437,14 +439,17 @@ class Generator(nn.Module):
                     style_dim,
                     upsample=True,
                     blur_kernel=blur_kernel,
+                    layerID = layer_index
                 )
             )
+            layer_index+=1
 
             self.convs.append(
                 StyledConv(
-                    out_channel, out_channel, 3, style_dim, blur_kernel=blur_kernel
+                    out_channel, out_channel, 3, style_dim, blur_kernel=blur_kernel, layerID = layer_index
                 )
             )
+            layer_index+=1
 
             self.to_rgbs.append(ToRGB(out_channel, style_dim))
 
