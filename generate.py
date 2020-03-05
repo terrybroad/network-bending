@@ -5,34 +5,36 @@ from torchvision import utils
 from model import Generator
 from tqdm import tqdm
 
-layer_channel_dict = {
-    0: 512,
-    1: 512,
-    2: 512,
-    3: 512,
-    4: 512,
-    5: 512,
-    6: 512,
-    7: 512,
-    8: 512,
-    9: 256,
-    10: 256,
-    11: 128,
-    12: 128,
-    13: 64,
-    14: 64,
-    15: 32,
-    16: 32
-}
+def create_layer_channel_dim_dict(channel_multiplier):
+    layer_channel_dict = {
+        0: 512,
+        1: 512,
+        2: 512,
+        3: 512,
+        4: 512,
+        5: 512,
+        6: 512,
+        7: 256*channel_multiplier,
+        8: 256*channel_multiplier,
+        9: 128*channel_multiplier,
+        10: 128*channel_multiplier,
+        11: 64*channel_multiplier,
+        12: 64*channel_multiplier,
+        13: 32*channel_multiplier,
+        14: 32*channel_multiplier,
+        15: 16*channel_multiplier,
+        16: 16*channel_multiplier
+    }
+    return layer_channel_dict
 
-def generate(args, g_ema, device, mean_latent):
+def generate(args, g_ema, device, mean_latent, t_dict_list):
 
     with torch.no_grad():
         g_ema.eval()
         for i in tqdm(range(args.pics)):
            sample_z = torch.randn(args.sample, args.latent, device=device)
 
-           sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent)
+           sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
            
            utils.save_image(
             sample,
@@ -42,8 +44,16 @@ def generate(args, g_ema, device, mean_latent):
             range=(-1, 1),
         )
 
-def create_random_layer_transform_dict(layer,transform,percept):
-
+def create_random_layer_transform_dict(layer,transform,percentage, params):
+    indicies = range(0,512)
+    transform_dict ={
+        "layerID": layer,
+        "transformID": transform,
+        "indicies": indicies,
+        "params": params
+    }
+    print(transform_dict['params'])
+    return transform_dict
 
 if __name__ == '__main__':
     device = 'cuda'
@@ -83,4 +93,6 @@ if __name__ == '__main__':
     else:
         mean_latent = None
 
-    generate(args, g_ema, device, mean_latent)
+    transform_dict_list = []
+    transform_dict_list.append( create_random_layer_transform_dict(5,"scalar-multiply",0.5, [10.0]) )
+    generate(args, g_ema, device, mean_latent, transform_dict_list)
