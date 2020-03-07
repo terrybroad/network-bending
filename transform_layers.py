@@ -1,6 +1,7 @@
 from torch import nn
 from torch.nn import init
 from torch.nn import functional as F
+from torch.autograd import Variable
 import torch.utils.cpp_extension
 import random
 
@@ -107,7 +108,7 @@ class FlipHorizontal(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                tf = d_.flip([3])
+                tf = d_.flip([1])
                 tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
                 x_array[i] = tf
         return torch.cat(x_array,1)
@@ -121,7 +122,7 @@ class FlipVertical(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                tf = d_.flip([2])
+                tf = d_.flip([0])
                 tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
                 x_array[i] = tf
         return torch.cat(x_array,1)
@@ -155,6 +156,7 @@ class BinaryThreshold(nn.Module):
             if i in indicies:
                 d_ = torch.squeeze(dim)
                 t = Variable(torch.Tensor([params[0]]))
+                t = t.to(d_.device)
                 tf = (d_ > t).float() * 1
                 tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
                 x_array[i] = tf
@@ -216,8 +218,8 @@ class ManipulationLayer(nn.Module):
             "translate": self.translate,
             "scale": self.scale,
             "rotate": self.rotate,
-            "flip-horizontal": self.flip_h,
-            "flip-vertical": self.flip_v,
+            "flip-h": self.flip_h,
+            "flip-v": self.flip_v,
             "invert": self.invert,
             "binary-thresh": self.binary_thresh,
             "scalar-multiply": self.scalar_multiply,
