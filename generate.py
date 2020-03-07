@@ -1,59 +1,31 @@
 import argparse
-
 import torch
+import os
+
 from torchvision import utils
 from model import Generator
 from tqdm import tqdm
-
-def create_layer_channel_dim_dict(channel_multiplier):
-    layer_channel_dict = {
-        0: 512,
-        1: 512,
-        2: 512,
-        3: 512,
-        4: 512,
-        5: 512,
-        6: 512,
-        7: 256*channel_multiplier,
-        8: 256*channel_multiplier,
-        9: 128*channel_multiplier,
-        10: 128*channel_multiplier,
-        11: 64*channel_multiplier,
-        12: 64*channel_multiplier,
-        13: 32*channel_multiplier,
-        14: 32*channel_multiplier,
-        15: 16*channel_multiplier,
-        16: 16*channel_multiplier
-    }
-    return layer_channel_dict
+from util import *
 
 def generate(args, g_ema, device, mean_latent, t_dict_list):
 
     with torch.no_grad():
         g_ema.eval()
         for i in tqdm(range(args.pics)):
-           sample_z = torch.randn(args.sample, args.latent, device=device)
+            sample_z = torch.randn(args.sample, args.latent, device=device)
 
-           sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
-           
-           utils.save_image(
-            sample,
-            f'sample/{str(i).zfill(6)}.png',
-            nrow=1,
-            normalize=True,
-            range=(-1, 1),
+            sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
+
+            if not os.path.exists('sample'):
+                os.makedirs('sample')
+
+            utils.save_image(
+                sample,
+                f'sample/{str(i).zfill(6)}.png',
+                nrow=1,
+                normalize=True,
+                range=(-1, 1),
         )
-
-def create_random_layer_transform_dict(layer,transform,percentage, params):
-    indicies = range(0,512)
-    transform_dict ={
-        "layerID": layer,
-        "transformID": transform,
-        "indicies": indicies,
-        "params": params
-    }
-    print(transform_dict['params'])
-    return transform_dict
 
 if __name__ == '__main__':
     device = 'cuda'
@@ -63,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('--size', type=int, default=1024)
     parser.add_argument('--sample', type=int, default=1)
     parser.add_argument('--pics', type=int, default=20)
-    parser.add_argument('--truncation', type=float, default=1)
+    parser.add_argument('--truncation', type=float, default=0.5)
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="stylegan2-ffhq-config-f.pt")
     parser.add_argument('--channel_multiplier', type=int, default=2)
@@ -92,7 +64,7 @@ if __name__ == '__main__':
             mean_latent = g_ema.mean_latent(args.truncation_mean)
     else:
         mean_latent = None
-
+    layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
     transform_dict_list = []
-    transform_dict_list.append( create_random_layer_transform_dict(5,"scalar-multiply",0.5, [10.0]) )
+    transform_dict_list.append(create_random_transform_dict(7,layer_channel_dims,"flip-h",[0.5], 0.5))
     generate(args, g_ema, device, mean_latent, transform_dict_list)
