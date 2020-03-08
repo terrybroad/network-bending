@@ -1,0 +1,16 @@
+transforms:
+- layer: 2
+  transform: "invert"
+  params: []
+  features: "all"
+  feature-param: 
+- layer: 6
+  transform: "binary-thresh"
+  params: [0.5]
+  features: "random"
+  feature-param: 0.5
+- layer: 6
+  transform: "scalar-multiply"
+  params: [5]
+  features: "all"
+  feature-param: 
