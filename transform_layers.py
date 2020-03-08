@@ -18,7 +18,7 @@ class Erode(nn.Module):
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], int) or params[0] < 0):
             print('Erosion parameter must be a positive integer')
-            raise ValueError
+            # raise ValueError
         
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):
@@ -36,7 +36,7 @@ class Dilate(nn.Module):
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], int) or params[0] < 0):
             print('Dilation parameter must be a positive integer')
-            raise ValueError
+            # raise ValueError
         
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):
@@ -55,7 +55,7 @@ class Translate(nn.Module):
         if(not isinstance(params[0], float) or not isinstance(params[1], float)
          or params[0] < -1 or params[0] > 1 or params[1] < -1 or params[1] > 1):
             print('Translation must have two parameters, which should be floats between -1 and 1.')
-            raise ValueError
+            # raise ValueError
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):
             if i in indicies:
@@ -72,7 +72,7 @@ class Scale(nn.Module):
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], float)):
             print('Scale parameter should be a float.')
-            raise ValueError
+            # raise ValueError
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):
             if i in indicies:
@@ -89,7 +89,7 @@ class Rotate(nn.Module):
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], float) or params[0] < 0 or params[0] > 360):
             print('Rotation parameter should be a float between 0 and 360 degrees.')
-            raise ValueError
+            # raise ValueError
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):
             if i in indicies:
@@ -149,7 +149,7 @@ class BinaryThreshold(nn.Module):
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], float) or params[0] < -1 or params[0] > 1):
             print('Binary threshold parameter should be a float between -1 and 1.')
-            raise ValueError
+            # raise ValueError
 
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):
@@ -169,7 +169,7 @@ class ScalarMultiply(nn.Module):
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], float)):
             print('Scalar multiply parameter should be a float between -1 and 1.')
-            raise ValueError
+            # raise ValueError
 
         x_array = list(torch.split(x,1,1))
         for i, dim in enumerate(x_array):

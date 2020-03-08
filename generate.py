@@ -1,5 +1,6 @@
 import argparse
 import torch
+import yaml
 import os
 
 from torchvision import utils
@@ -8,12 +9,10 @@ from tqdm import tqdm
 from util import *
 
 def generate(args, g_ema, device, mean_latent, t_dict_list):
-
     with torch.no_grad():
         g_ema.eval()
         for i in tqdm(range(args.pics)):
             sample_z = torch.randn(args.sample, args.latent, device=device)
-
             sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
 
             if not os.path.exists('sample'):
@@ -39,13 +38,20 @@ if __name__ == '__main__':
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="stylegan2-ffhq-config-f.pt")
     parser.add_argument('--channel_multiplier', type=int, default=2)
+    parser.add_argument('--config', type=str, default="example_transform_config.yaml")
 
     args = parser.parse_args()
-
 
     args.latent = 512
     args.n_mlp = 8
 
+    yaml_config = {}
+    with open(args.config, 'r') as stream:
+        try:
+            yaml_config = yaml.load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    
     g_ema = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
     ).to(device)
@@ -64,7 +70,7 @@ if __name__ == '__main__':
             mean_latent = g_ema.mean_latent(args.truncation_mean)
     else:
         mean_latent = None
+    
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
-    transform_dict_list = []
-    transform_dict_list.append(create_random_transform_dict(7,layer_channel_dims,"flip-h",[0.5], 0.5))
+    transform_dict_list = create_transforms_dict_list(yaml_config, layer_channel_dims)
     generate(args, g_ema, device, mean_latent, transform_dict_list)

@@ -43,3 +43,26 @@ def create_layer_wide_transform_dict(layer, layer_channel_dict, transform, param
         "params": params
     }
     return transform_dict
+
+def create_transforms_dict_list(yaml_config, layer_channel_dict):
+    transform_dict_list = []
+    
+    for transform in yaml_config['transforms']:
+        if transform['features'] == 'all':
+            transform_dict_list.append(
+                create_layer_wide_transform_dict(transform['layer'],
+                    layer_channel_dict, 
+                    transform['transform'], 
+                    transform['params']))
+        elif transform['features'] == 'random':
+            transform_dict_list.append(
+                create_random_transform_dict(transform['layer'],
+                    layer_channel_dict, 
+                    transform['transform'], 
+                    transform['params'],
+                    transform['feature-param']))
+        else:
+            print('transform type: ' + str(transform) + ' not recognised')
+    
+    return transform_dict_list
+        

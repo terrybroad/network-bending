@@ -185,3 +185,9 @@ install_manifest.txt
 
 #images
 *.png
+
+#config
+*.yaml
+
+#examples
+!example_transform_config.yaml
