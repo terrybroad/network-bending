@@ -1,0 +1,4 @@
+transform: "binary-thresh"
+params: [0.9]
+features: "all"
+feature-param: 
