@@ -10,6 +10,7 @@ from torch.autograd import Function
 
 from op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d
 
+from transform_layers import *
 
 class PixelNorm(nn.Module):
     def __init__(self):
@@ -314,6 +315,7 @@ class StyledConv(nn.Module):
         upsample=False,
         blur_kernel=[1, 3, 3, 1],
         demodulate=True,
+        layerID=-1
     ):
         super().__init__()
 
@@ -331,13 +333,14 @@ class StyledConv(nn.Module):
         # self.bias = nn.Parameter(torch.zeros(1, out_channel, 1, 1))
         # self.activate = ScaledLeakyReLU(0.2)
         self.activate = FusedLeakyReLU(out_channel)
+        self.manipulation = ManipulationLayer(layerID)
 
-    def forward(self, input, style, noise=None):
+    def forward(self, input, style, noise=None, transform_dict_list=[]):
         out = self.conv(input, style)
         out = self.noise(out, noise=noise)
         # out = out + self.bias
         out = self.activate(out)
-
+        out = self.manipulation(out, transform_dict_list)
         return out
 
 
@@ -401,11 +404,13 @@ class Generator(nn.Module):
             512: 32 * channel_multiplier,
             1024: 16 * channel_multiplier,
         }
-
+        
+        layer_index = 0
         self.input = ConstantInput(self.channels[4])
         self.conv1 = StyledConv(
-            self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel
+            self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel, layerID=layer_index
         )
+        layer_index += 1
         self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
 
         self.log_size = int(math.log(size, 2))
@@ -422,7 +427,7 @@ class Generator(nn.Module):
             res = (layer_idx + 5) // 2
             shape = [1, 1, 2 ** res, 2 ** res]
             self.noises.register_buffer(f'noise_{layer_idx}', torch.randn(*shape))
-
+     
         for i in range(3, self.log_size + 1):
             out_channel = self.channels[2 ** i]
 
@@ -434,14 +439,17 @@ class Generator(nn.Module):
                     style_dim,
                     upsample=True,
                     blur_kernel=blur_kernel,
+                    layerID = layer_index
                 )
             )
+            layer_index+=1
 
             self.convs.append(
                 StyledConv(
-                    out_channel, out_channel, 3, style_dim, blur_kernel=blur_kernel
+                    out_channel, out_channel, 3, style_dim, blur_kernel=blur_kernel, layerID = layer_index
                 )
             )
+            layer_index+=1
 
             self.to_rgbs.append(ToRGB(out_channel, style_dim))
 
@@ -481,6 +489,7 @@ class Generator(nn.Module):
         input_is_latent=False,
         noise=None,
         randomize_noise=True,
+        transform_dict_list=[]
     ):
         if not input_is_latent:
             styles = [self.style(s) for s in styles]
@@ -530,8 +539,8 @@ class Generator(nn.Module):
         for conv1, conv2, noise1, noise2, to_rgb in zip(
             self.convs[::2], self.convs[1::2], noise[1::2], noise[2::2], self.to_rgbs
         ):
-            out = conv1(out, latent[:, i], noise=noise1)
-            out = conv2(out, latent[:, i + 1], noise=noise2)
+            out = conv1(out, latent[:, i], noise=noise1, transform_dict_list=transform_dict_list)
+            out = conv2(out, latent[:, i + 1], noise=noise2, transform_dict_list=transform_dict_list)
             skip = to_rgb(out, latent[:, i + 2], skip)
 
             i += 2
@@ -613,65 +622,3 @@ class ResBlock(nn.Module):
         out = (out + skip) / math.sqrt(2)
 
         return out
-
-
-class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=2, blur_kernel=[1, 3, 3, 1]):
-        super().__init__()
-
-        channels = {
-            4: 512,
-            8: 512,
-            16: 512,
-            32: 512,
-            64: 256 * channel_multiplier,
-            128: 128 * channel_multiplier,
-            256: 64 * channel_multiplier,
-            512: 32 * channel_multiplier,
-            1024: 16 * channel_multiplier,
-        }
-
-        convs = [ConvLayer(3, channels[size], 1)]
-
-        log_size = int(math.log(size, 2))
-
-        in_channel = channels[size]
-
-        for i in range(log_size, 2, -1):
-            out_channel = channels[2 ** (i - 1)]
-
-            convs.append(ResBlock(in_channel, out_channel, blur_kernel))
-
-            in_channel = out_channel
-
-        self.convs = nn.Sequential(*convs)
-
-        self.stddev_group = 4
-        self.stddev_feat = 1
-
-        self.final_conv = ConvLayer(in_channel + 1, channels[4], 3)
-        self.final_linear = nn.Sequential(
-            EqualLinear(channels[4] * 4 * 4, channels[4], activation='fused_lrelu'),
-            EqualLinear(channels[4], 1),
-        )
-
-    def forward(self, input):
-        out = self.convs(input)
-
-        batch, channel, height, width = out.shape
-        group = min(batch, self.stddev_group)
-        stddev = out.view(
-            group, -1, self.stddev_feat, channel // self.stddev_feat, height, width
-        )
-        stddev = torch.sqrt(stddev.var(0, unbiased=False) + 1e-8)
-        stddev = stddev.mean([2, 3, 4], keepdims=True).squeeze(2)
-        stddev = stddev.repeat(group, 1, height, width)
-        out = torch.cat([out, stddev], 1)
-
-        out = self.final_conv(out)
-
-        out = out.view(batch, -1)
-        out = self.final_linear(out)
-
-        return out
-

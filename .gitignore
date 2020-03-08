@@ -182,3 +182,12 @@ install_manifest.txt
 *.exe
 *.out
 *.app
+
+#images
+*.png
+
+#config
+*.yaml
+
+#examples
+!example_transform_config.yaml
