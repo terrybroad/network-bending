@@ -168,7 +168,7 @@ class ScalarMultiply(nn.Module):
     
     def forward(self, x, params, indicies):
         if(not isinstance(params[0], float)):
-            print('Scalar multiply parameter should be a float between -1 and 1.')
+            print('Scalar multiply parameter should be a float')
             # raise ValueError
 
         x_array = list(torch.split(x,1,1))

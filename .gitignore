@@ -191,3 +191,4 @@ install_manifest.txt
 
 #examples
 !example_transform_config.yaml
+!sample_strip_config.yaml
