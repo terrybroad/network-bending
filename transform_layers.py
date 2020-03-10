@@ -2,8 +2,10 @@ from torch import nn
 from torch.nn import init
 from torch.nn import functional as F
 from torch.autograd import Variable
+from torchvision import utils
 import torch.utils.cpp_extension
 import random
+import os
 
 torch.ops.load_library("transforms/erode/build/liberode.so")
 torch.ops.load_library("transforms/dilate/build/libdilate.so")
@@ -226,10 +228,25 @@ class ManipulationLayer(nn.Module):
             "ablate": self.ablate
         }
 
+    def save_activations(self, input, index):
+        if not os.path.exists('activations/'+str(self.layerID)):
+            os.makedirs('activations/'+str(self.layerID))
+        
+        x_array = list(torch.split(input,1,1))
+        for i, activation in enumerate(x_array):
+            utils.save_image(
+                torch.squeeze(activation),
+                f'activations/{str(self.layerID)}/{str(index).zfill(5)}_{str(i).zfill(3)}.png',
+                nrow=1,
+                normalize=True,
+                range=(-1, 1))
+
     def forward(self, input, tranforms_dict_list):
         out = input
         for transform_dict in tranforms_dict_list:
+            if transform_dict['layerID'] == -1:
+                self.save_activations(input, transform_dict['index'])
             if transform_dict['layerID'] == self.layerID:
                 out = self.layer_options[transform_dict['transformID']](out, transform_dict['params'], transform_dict['indicies'])
         return out
-            
+    

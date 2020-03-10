@@ -2,6 +2,7 @@ import argparse
 import torch
 import yaml
 import os
+import copy
 
 from torchvision import utils
 from model import Generator
@@ -12,18 +13,22 @@ def generate(args, g_ema, device, mean_latent, t_dict_list):
     with torch.no_grad():
         g_ema.eval()
         for i in tqdm(range(args.pics)):
+            extra_t_dict_list =  copy.deepcopy(t_dict_list)
+            extra_t_dict_list.append({'layerID': -1, 'index': i})
             sample_z = torch.randn(args.sample, args.latent, device=device)
-            sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
-
+            sample, _ = g_ema([sample_z], 
+                                truncation=args.truncation, 
+                                truncation_latent=mean_latent, 
+                                transform_dict_list=extra_t_dict_list)
             if not os.path.exists('sample'):
-                os.makedirs('sample')
-
+                    os.makedirs('sample')
             utils.save_image(
                 sample,
                 f'sample/{str(i).zfill(6)}.png',
                 nrow=1,
                 normalize=True,
                 range=(-1, 1))
+
 
 if __name__ == '__main__':
     device = 'cuda'
