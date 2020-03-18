@@ -186,7 +186,7 @@ if __name__ == '__main__':
             )
         )
 
-    result_file = {'noises': noises}
+    result_file = {'noises': noises, 'latent': latent_path[-1]}
 
     img_gen, _ = g_ema([latent_path[-1]], input_is_latent=True, noise=noises)
 

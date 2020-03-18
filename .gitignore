@@ -186,6 +186,9 @@ install_manifest.txt
 #images
 *.png
 
+#pytorch files
+*.pt
+
 #config
 *.yaml
 
