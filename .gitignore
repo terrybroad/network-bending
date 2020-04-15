@@ -189,6 +189,9 @@ install_manifest.txt
 #config
 *.yaml
 
+#model files
+*.pt
+
 #examples
 !example_transform_config.yaml
 !sample_strip_config.yaml
