@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from torch.autograd import Function
 
 class FeatureClassifier_L1(nn.Module):
-    def __init__():
+    def __init__(self):
         super().__init__()
 
         input_channels = 1
