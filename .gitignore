@@ -192,6 +192,10 @@ install_manifest.txt
 #model files
 *.pt
 
+#logging
+*.b0bby
+*.json
+
 #examples
 !configs/example_transform_config.yaml
 !configs/sample_strip_config.yaml
