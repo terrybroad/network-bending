@@ -99,4 +99,4 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck):
     writer.close()   
 
 
-train_classifier(1,10,11,10)
+train_classifier(layer=11, batch_size=50, n_epochs=100, bottleneck=10)

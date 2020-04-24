@@ -229,14 +229,15 @@ class ManipulationLayer(nn.Module):
         }
 
     def save_activations(self, input, index):
-        if not os.path.exists('activations/'+str(self.layerID)):
-            os.makedirs('activations/'+str(self.layerID))
+        path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
+        if not os.path.exists(path):
+            os.makedirs(path)
         
         x_array = list(torch.split(input,1,1))
         for i, activation in enumerate(x_array):
             utils.save_image(
                 torch.squeeze(activation),
-                f'activations/{str(self.layerID)}/{str(index).zfill(5)}_{str(i).zfill(3)}.png',
+                path+str(i).zfill(3)+'.png',
                 nrow=1,
                 normalize=True,
                 range=(-1, 1))

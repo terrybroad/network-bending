@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="stylegan2-ffhq-config-f.pt")
     parser.add_argument('--channel_multiplier', type=int, default=2)
-    parser.add_argument('--config', type=str, default="example_transform_config.yaml")
+    parser.add_argument('--config', type=str, default="configs/example_transform_config.yaml")
 
     args = parser.parse_args()
 
