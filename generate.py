@@ -8,11 +8,13 @@ from model import Generator
 from tqdm import tqdm
 from util import *
 
-def generate(args, g_ema, device, mean_latent, t_dict_list):
+def generate(args, g_ema, device, mean_latent, yaml_config, layer_channel_dims):
     with torch.no_grad():
         g_ema.eval()
+        t_dict_list = create_transforms_dict_list(yaml_config, layer_channel_dims)
         for i in tqdm(range(args.pics)):
             sample_z = torch.randn(args.sample, args.latent, device=device)
+            print(sample_z.size())
             sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
 
             if not os.path.exists('sample'):
@@ -24,6 +26,27 @@ def generate(args, g_ema, device, mean_latent, t_dict_list):
                 nrow=1,
                 normalize=True,
                 range=(-1, 1))
+
+def generate_from_latent(args, g_ema, device, mean_latent, yaml_config, layer_channel_dims, latent, noise):
+    with torch.no_grad():
+        g_ema.eval()
+        slice_latent = latent[0,:]
+        slce_latent = slice_latent.unsqueeze(0)
+        print(slice_latent.size())
+        for i in tqdm(range(args.pics)):
+            t_dict_list = create_transforms_dict_list(yaml_config, layer_channel_dims)
+            sample, _ = g_ema([slce_latent], input_is_latent=True, noise=noises, transform_dict_list=t_dict_list)
+
+            if not os.path.exists('sample'):
+                os.makedirs('sample')
+
+            utils.save_image(
+                sample,
+                f'sample/{str(i).zfill(6)}.png',
+                nrow=1,
+                normalize=True,
+                range=(-1, 1),
+            )
 
 if __name__ == '__main__':
     device = 'cuda'
@@ -38,6 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--ckpt', type=str, default="stylegan2-ffhq-config-f.pt")
     parser.add_argument('--channel_multiplier', type=int, default=2)
     parser.add_argument('--config', type=str, default="configs/example_transform_config.yaml")
+    parser.add_argument('--load_latent', type=str, default="") 
 
     args = parser.parse_args()
 
@@ -72,7 +96,13 @@ if __name__ == '__main__':
     
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
     transform_dict_list = create_transforms_dict_list(yaml_config, layer_channel_dims)
-    generate(args, g_ema, device, mean_latent, transform_dict_list)
+
+    if args.load_latent == "":
+        generate(args, g_ema, device, mean_latent, yaml_config, layer_channel_dims)
+    else:
+        latent=torch.load(args.load_latent)['latent']
+        noises=torch.load(args.load_latent)['noises']
+        generate_from_latent(args, g_ema, device, mean_latent, yaml_config, layer_channel_dims, latent, noises)
     
     config_out = {}
     config_out['transforms'] = yaml_config['transforms']
