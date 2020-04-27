@@ -1,6 +1,6 @@
 # Network Bending
 
-Software reposity for code for paper "Network Bending: manipulating feature activations in GANs"
+Software reposity for code for paper "Network Bending: Manipulating The Inner Representations of Deep Generative Models"
 
 Code is based on this [StyleGAN2 pytorch implementation](https://github.com/rosinality/stylegan2-pytorch) by rosinality. You can refer to this codebase for training your own models, or converting models from the official tensorflow implementation. 
 
@@ -30,7 +30,9 @@ You can download the official StyleGAN2 FFHQ 1024 model converted to PyTorch for
 
 ### Download Clustering Models
 
-Link to clustering models
+<Link to clustering models>
+
+Instructions to unzip and put in the right place
 
 ### Generate images
 
