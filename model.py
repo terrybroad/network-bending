@@ -483,6 +483,7 @@ class Generator(nn.Module):
         self,
         styles,
         return_latents=False,
+        return_activation_maps=False,
         inject_index=None,
         truncation=1,
         truncation_latent=None,
@@ -529,10 +530,10 @@ class Generator(nn.Module):
             latent2 = styles[1].unsqueeze(1).repeat(1, self.n_latent - inject_index, 1)
 
             latent = torch.cat([latent, latent2], 1)
-
+        activation_map_list = []
         out = self.input(latent)
         out = self.conv1(out, latent[:, 0], noise=noise[0])
-
+        activation_map_list.append(out)
         skip = self.to_rgb1(out, latent[:, 1])
 
         i = 1
@@ -540,14 +541,19 @@ class Generator(nn.Module):
             self.convs[::2], self.convs[1::2], noise[1::2], noise[2::2], self.to_rgbs
         ):
             out = conv1(out, latent[:, i], noise=noise1, transform_dict_list=transform_dict_list)
+            activation_map_list.append(out)
             out = conv2(out, latent[:, i + 1], noise=noise2, transform_dict_list=transform_dict_list)
+            activation_map_list.append(out)
             skip = to_rgb(out, latent[:, i + 2], skip)
 
             i += 2
 
         image = skip
 
-        if return_latents:
+        if return_activation_maps:
+            return image, activation_map_list
+        
+        elif return_latents:
             return image, latent
 
         else:
