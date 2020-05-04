@@ -7,7 +7,9 @@ find_package(OpenCV REQUIRED)
 # Define our library target
 add_library(translate SHARED op.cpp)
 # Enable C++11
-target_compile_features(translate PRIVATE cxx_range_for)
+#target_compile_features(translate PRIVATE cxx_range_for)
+# Enable C++14
+target_compile_features(translate PRIVATE cxx_std_14)
 # Link against LibTorch
 target_link_libraries(translate "${TORCH_LIBRARIES}")
 # Link against OpenCV

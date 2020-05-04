@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 from clustering_models import FeatureClassifier
 
 
-def train_classifier(layer, batch_size, n_epochs, bottleneck):
+def train_classifier(layer, batch_size, n_epochs=100, bottleneck=10):
     transform = transforms.Compose([transforms.Grayscale(),transforms.ToTensor()])
     dataset = datasets.ImageFolder('/home/terence/data/network-bending/activations/'+str(layer),  transform=transform)
     device = 'cuda'
@@ -99,4 +99,4 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck):
     writer.close()   
 
 
-train_classifier(layer=11, batch_size=50, n_epochs=100, bottleneck=10)
+train_classifier(layer=1, batch_size=500, n_epochs=100, bottleneck=10)
