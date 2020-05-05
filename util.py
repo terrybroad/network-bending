@@ -44,7 +44,24 @@ def create_layer_wide_transform_dict(layer, layer_channel_dict, transform, param
     }
     return transform_dict
 
-def create_transforms_dict_list(yaml_config, layer_channel_dict):
+def create_cluster_transform_dict(layer, layer_channel_dict, cluster_config, transform, params, cluster_ID):
+    layer_dim = layer_channel_dict[layer]
+    indicies = []
+    for i, c_dict in enumerate(cluster_config[layer]):
+        if c_dict['cluster_index'] == int(cluster_ID):
+            indicies.append(c_dict['feature_index'])
+    print(indicies)
+    if len(indicies) == 0:
+        print("No indicies found for clusterID: " +str(cluster_ID) + " on layer: " +str(layer))
+    transform_dict ={
+        "layerID": layer,
+        "transformID": transform,
+        "indicies": indicies,
+        "params": params
+    }
+    return transform_dict
+
+def create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dict):
     transform_dict_list = []
     
     for transform in yaml_config['transforms']:
@@ -58,6 +75,14 @@ def create_transforms_dict_list(yaml_config, layer_channel_dict):
             transform_dict_list.append(
                 create_random_transform_dict(transform['layer'],
                     layer_channel_dict, 
+                    transform['transform'], 
+                    transform['params'],
+                    transform['feature-param']))
+        elif transform['features'] == 'cluster' and cluster_config != {}:
+            transform_dict_list.append(
+                create_cluster_transform_dict(transform['layer'],
+                    layer_channel_dict, 
+                    cluster_config,
                     transform['transform'], 
                     transform['params'],
                     transform['feature-param']))

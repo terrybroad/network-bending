@@ -533,7 +533,7 @@ class Generator(nn.Module):
         activation_map_list = []
         out = self.input(latent)
         out = self.conv1(out, latent[:, 0], noise=noise[0])
-        activation_map_list.append(out)
+        # activation_map_list.append(out)
         skip = self.to_rgb1(out, latent[:, 1])
 
         i = 1

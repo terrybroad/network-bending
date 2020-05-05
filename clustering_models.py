@@ -110,7 +110,7 @@ class InvertedResidual(nn.Module):
         return out
 
 class FeatureClassifier(nn.Module):
-    def __init__(self, layer_depth, bottleneck):
+    def __init__(self, layer_depth, bottleneck=10):
         super().__init__()
 
         self.num_layers = layer_depth_dict[layer_depth]
