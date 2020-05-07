@@ -30,7 +30,7 @@ cluster_layer_dict = {
     16 : 3
 }
 
-def get_clusters_from_generated(args, g_ema, device, mean_latent, t_dict_list, yaml_config, layer_channel_dims):
+def get_clusters_from_generated_greedy(args, g_ema, device, mean_latent, t_dict_list, yaml_config, layer_channel_dims):
     print("get clusters")
     with torch.no_grad():
         g_ema.eval()
@@ -80,6 +80,60 @@ def get_clusters_from_generated(args, g_ema, device, mean_latent, t_dict_list, y
             for j in tqdm(range(layer_channel_dims[true_index])):
                 cluster_id = max(feature_cluster_sum_dict[true_index][j])
                 cluster_dict = {"feature_index": int(j), "cluster_index": int(cluster_id)}
+                dict_list.append(cluster_dict)
+            feature_cluster_dict[true_index] = dict_list
+    
+    with open(r'cluster_dict.yaml', 'w') as file:
+        documents = yaml.dump(feature_cluster_dict, file)
+
+def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict_list, yaml_config, layer_channel_dims):
+    print("get clusters")
+    with torch.no_grad():
+        g_ema.eval()
+
+        latent_ll = []
+        feature_ll = []
+        feature_cluster_sum_dict = {}
+        feature_cluster_dict = {}
+        
+        for i in tqdm(range(16)):
+            true_index = i+1
+            latent_list = []
+            feature_list = []
+            latent_ll.append(latent_list)
+            feature_ll.append(feature_list)
+            feature_cluster_sum_dict[true_index] = {}
+            for j in tqdm(range(layer_channel_dims[true_index])):
+                feature_cluster_sum_dict[true_index][j] = 0 
+                latent_ll[i].append(0)
+
+        for i in tqdm(range(args.num_samples)):
+            print("processing sample: " + str(i))
+            sample_z = torch.randn(args.sample, args.latent, device=device) 
+            sample, activation_maps = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list, return_activation_maps=True)
+            for index, activations in enumerate(activation_maps):
+                true_index = index+1
+                classifier = FeatureClassifier(true_index)
+                classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
+                classifier_state_dict = torch.load(classifier_str)
+                classifier.load_state_dict(classifier_state_dict)
+                classifier.to(device)
+                layer_activation_maps = activation_maps[index]
+                a_map_array = list(torch.split(layer_activation_maps,1,1))
+                for j, map in enumerate(a_map_array):
+                    map = map.to(device)
+                    feat_vec, class_prob = classifier(map)
+                    normalised_feat_vec = feat_vec / args.num_samples
+                    latent_ll[index][j] = latent_ll[index][j] + normalised_feat_vec
+                    # feature_ll[index].append(j)
+        
+        for i in tqdm(range(16)):
+            true_index = i+1
+            print("generating clusters for layer: " + str(i))
+            cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_ll[i]), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
+            dict_list = []
+            for j, id in enumerate(cluster_ids_x):
+                cluster_dict = {"feature_index": int(j), "cluster_index": int(id)}
                 dict_list.append(cluster_dict)
             feature_cluster_dict[true_index] = dict_list
     
@@ -179,7 +233,7 @@ if __name__ == '__main__':
     transform_dict_list = create_transforms_dict_list(yaml_config, {}, layer_channel_dims)
     
     if args.load_latent == "":
-        get_clusters_from_generated(args, g_ema, device, mean_latent, transform_dict_list, yaml_config, layer_channel_dims)
+        get_clusters_from_generated_average(args, g_ema, device, mean_latent, transform_dict_list, yaml_config, layer_channel_dims)
     else:
         latent=torch.load(args.load_latent)['latent']
         noises=torch.load(args.load_latent)['noises']

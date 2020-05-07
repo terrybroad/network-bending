@@ -129,7 +129,6 @@ class FeatureClassifier(nn.Module):
         for i in range(self.num_layers):
             shuffle_layers_dict[str(i) + "res"] = InvertedResidual(output_channels, output_channels, 1)
             shuffle_layers_dict[str(i) + "maxpool"] = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-            print(i)
         
         self.shuffleLayers = nn.Sequential(shuffle_layers_dict)
         
