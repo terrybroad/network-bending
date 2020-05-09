@@ -95,6 +95,7 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
         feature_ll = []
         feature_cluster_sum_dict = {}
         feature_cluster_dict = {}
+        feature_latent_dict = {}
         
         for i in tqdm(range(16)):
             true_index = i+1
@@ -132,14 +133,19 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
             print("generating clusters for layer: " + str(i))
             cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_ll[i]), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
             dict_list = []
+            latent_dict_list = []
             for j, id in enumerate(cluster_ids_x):
                 cluster_dict = {"feature_index": int(j), "cluster_index": int(id)}
+                latent_dict = {"feature_index": int(j), "latent": latent_ll[i][j].to('cpu').numpy().tolist()}
                 dict_list.append(cluster_dict)
+                latent_dict_list.append(latent_dict)
             feature_cluster_dict[true_index] = dict_list
+            feature_latent_dict[true_index] = latent_dict_list
     
     with open(r'cluster_dict.yaml', 'w') as file:
         documents = yaml.dump(feature_cluster_dict, file)
-
+    with open(r'latent_dict.yaml', 'w') as file:
+        documents = yaml.dump(feature_latent_dict, file)
 
 
 def get_clusters_from_latent(args, g_ema, device, mean_latent, t_dict_list, yaml_config, layer_channel_dims, latent, noise):
