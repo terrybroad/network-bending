@@ -2,6 +2,7 @@
 #include <torch/script.h>
 
 torch::Tensor rotate(torch::Tensor image, double angle) {
+  image = image.to(torch::kCPU);
   cv::Mat image_mat(/*rows=*/image.size(0),
                     /*cols=*/image.size(1),
                     /*type=*/CV_32FC1,
@@ -14,7 +15,7 @@ torch::Tensor rotate(torch::Tensor image, double angle) {
 
   torch::Tensor output =
     torch::from_blob(output_mat.ptr<float>(), /*sizes=*/{image.size(0), image.size(1)});
-  return output.clone();
+  return output.clone().to(torch::kCUDA);
 }
 
 static auto registry =

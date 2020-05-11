@@ -2,6 +2,7 @@ import argparse
 import torch
 import yaml
 import os
+import faulthandler
 
 from torchvision import utils
 from model import Generator
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="models/stylegan2-ffhq-config-f.pt")
     parser.add_argument('--channel_multiplier', type=int, default=2)
-    parser.add_argument('--config', type=str, default="configs/example_transform_config.yaml")
+    parser.add_argument('--config', type=str, default="configs/config.yaml")
     parser.add_argument('--load_latent', type=str, default="") 
     parser.add_argument('--load_clusters', type=str, default="")
 
@@ -105,7 +106,8 @@ if __name__ == '__main__':
     
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
     transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
-
+    
+    faulthandler.enable()
     if args.load_latent == "":
         generate(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
     else:
