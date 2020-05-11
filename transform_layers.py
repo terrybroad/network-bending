@@ -7,42 +7,6 @@ import torch.utils.cpp_extension
 import random
 import os
 
-# op_source = """
-# #include <opencv2/opencv.hpp>
-# #include <torch/script.h>
-# #include "opencv2/imgproc/imgproc.hpp"
-# #include "opencv2/highgui/highgui.hpp"
-
-# torch::Tensor erode(torch::Tensor image, int64_t dilation_size) {
-#   cv::Mat image_mat(/*rows=*/image.size(0),
-#                     /*cols=*/image.size(1),
-#                     /*type=*/CV_32FC1,
-#                     /*data=*/image.data<float>());
-  
-#   int dilation_type = cv::MORPH_ELLIPSE;
-#   cv::Mat output_mat;
-#   cv::Mat element = cv::getStructuringElement( dilation_type,
-#                                        cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-#                                        cv::Point( dilation_size, dilation_size ) );
-#   cv::erode( image_mat, output_mat, element );
-
-#   torch::Tensor output =
-#     torch::from_blob(output_mat.ptr<float>(), /*sizes=*/{image.size(0), image.size(1)});
-#   return output.clone();
-# }
-
-# static auto registry =
-#   torch::RegisterOperators("my_ops::erode", &erode);
-# """
-
-# torch.utils.cpp_extension.load_inline(
-#     name="erode",
-#     cpp_sources=op_source,
-#     extra_ldflags=["-lopencv_core", "-lopencv_imgproc"],
-#     is_python_module=False,
-#     verbose=True,
-# )
-
 torch.ops.load_library("transforms/erode/build/liberode.so")
 torch.ops.load_library("transforms/dilate/build/libdilate.so")
 torch.ops.load_library("transforms/scale/build/libscale.so")
@@ -132,8 +96,7 @@ class Rotate(nn.Module):
         for i, dim in enumerate(x_array):
             if i in indicies:
                 d_ = torch.squeeze(dim)
-                tf = torch.ops.my_ops.rotate(d_.to('cpu'),params[0])
-                tf = tf.cuda()
+                tf = torch.ops.my_ops.rotate(d_,params[0])
                 tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
                 x_array[i] = tf
         return torch.cat(x_array,1)

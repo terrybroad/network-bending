@@ -183,8 +183,13 @@ install_manifest.txt
 *.out
 *.app
 
-#images
+#images and video
 *.png
+*.jpg
+*.jpeg
+*.mp4
+*.mov
+
 
 #pytorch files
 *.pt
