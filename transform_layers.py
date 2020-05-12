@@ -6,6 +6,8 @@ from torchvision import utils
 import torch.utils.cpp_extension
 import random
 import os
+import numpy as np
+import scipy.ndimage
 
 torch.ops.load_library("transforms/erode/build/liberode.so")
 torch.ops.load_library("transforms/dilate/build/libdilate.so")
@@ -196,6 +198,42 @@ class Ablate(nn.Module):
                 x_array[i] = tf
         return torch.cat(x_array,1)
 
+
+class GaussianLayer(nn.Module):
+    def __init__(self):
+        super(GaussianLayer, self).__init__()
+        self.seq = nn.Sequential(
+            nn.ReflectionPad2d(10), 
+            nn.Conv2d(1, 1, 21, stride=1, padding=0, bias=None, groups=1)
+        )
+
+        self.weights_init()
+    def forward(self, x):
+        return self.seq(x)
+
+    def weights_init(self):
+        n= np.zeros((21,21))
+        n[10,10] = 1
+        k = scipy.ndimage.gaussian_filter(n,sigma=3)
+        for name, f in self.named_parameters():
+            f.data.copy_(torch.from_numpy(k))
+
+class Blur(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.guassian = GaussianLayer()
+        
+    def forward(self, x, params, indicies):
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            if i in indicies:
+                tf = self.guassian(dim)
+                # weight = get_grad_kernel(channels=1).cuda()
+                # tf = F.conv2d(input=dim, weight=weight, padding=1, groups=1)
+                # # tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+                x_array[i] = tf
+        return torch.cat(x_array,1)
+
 class ManipulationLayer(nn.Module):
     def __init__(self, layerID):
         super().__init__()
@@ -213,6 +251,7 @@ class ManipulationLayer(nn.Module):
         self.binary_thresh = BinaryThreshold()
         self.scalar_multiply = ScalarMultiply()
         self.ablate = Ablate()
+        self.blur = Blur()
         
         self.layer_options = {
             "erode" : self.erode,
@@ -225,7 +264,8 @@ class ManipulationLayer(nn.Module):
             "invert": self.invert,
             "binary-thresh": self.binary_thresh,
             "scalar-multiply": self.scalar_multiply,
-            "ablate": self.ablate
+            "ablate": self.ablate,
+            "blur": self.blur
         }
 
     def save_activations(self, input, index):
