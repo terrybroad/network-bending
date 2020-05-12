@@ -2,10 +2,11 @@
 #include <torch/script.h>
 
 torch::Tensor rotate(torch::Tensor image, double angle) {
-  cv::Mat image_mat(/*rows=*/image.size(0),
-                    /*cols=*/image.size(1),
-                    /*type=*/CV_32FC1,
-                    /*data=*/image.data<float>());
+  image = image.to(torch::kCPU);
+  cv::Mat image_mat(image.size(0),
+                    image.size(1),
+                    CV_32FC1,
+                    image.data_ptr<float>());
 
   cv::Mat output_mat;
   cv::Point2f centre(((float)image.size(0))/2.0,((float)image.size(1))/2.0);
@@ -13,8 +14,8 @@ torch::Tensor rotate(torch::Tensor image, double angle) {
   cv::warpAffine(image_mat, output_mat, rotationMat, image_mat.size());
 
   torch::Tensor output =
-    torch::from_blob(output_mat.ptr<float>(), /*sizes=*/{image.size(0), image.size(1)});
-  return output.clone();
+    torch::from_blob(output_mat.ptr<float>(),{image.size(0), image.size(1)});
+  return output.clone().to(torch::kCUDA);
 }
 
 static auto registry =

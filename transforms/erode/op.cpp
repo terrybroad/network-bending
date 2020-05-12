@@ -4,10 +4,11 @@
 #include "opencv2/highgui/highgui.hpp"
 
 torch::Tensor erode(torch::Tensor image, int64_t dilation_size) {
-  cv::Mat image_mat(/*rows=*/image.size(0),
-                    /*cols=*/image.size(1),
-                    /*type=*/CV_32FC1,
-                    /*data=*/image.data<float>());
+  image = image.to(torch::kCPU);
+  cv::Mat image_mat(image.size(0),
+                    image.size(1),
+                    CV_32FC1,
+                    image.data_ptr<float>());
   
   int dilation_type = cv::MORPH_ELLIPSE;
   cv::Mat output_mat;
@@ -17,8 +18,8 @@ torch::Tensor erode(torch::Tensor image, int64_t dilation_size) {
   cv::erode( image_mat, output_mat, element );
 
   torch::Tensor output =
-    torch::from_blob(output_mat.ptr<float>(), /*sizes=*/{image.size(0), image.size(1)});
-  return output.clone();
+    torch::from_blob(output_mat.ptr<float>(),{image.size(0), image.size(1)});
+  return output.clone().to(torch::kCUDA);
 }
 
 static auto registry =
