@@ -228,8 +228,11 @@ class ManipulationLayer(nn.Module):
             "ablate": self.ablate
         }
 
-    def save_activations(self, input, index):
-        path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
+    def save_activations(self, input, index, additional_str = ""):
+        if additional_str == "":
+            path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
+        else:
+            path = 'sample/' + additional_str + '/activations/'+str(self.layerID) +'/'+str(index) + '/'
         if not os.path.exists(path):
             os.makedirs(path)
         
@@ -241,6 +244,22 @@ class ManipulationLayer(nn.Module):
                 nrow=1,
                 normalize=True,
                 range=(-1, 1))
+    
+    # def save_activation_grid(self, input, index, additional_str = ""):
+    #     if additional_str == "":
+    #         path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
+    #     else:
+    #         path = 'sample/' + additional_str + str(self.layerID) +'/'+str(index) + '/'
+    #     if not os.path.exists(path):
+    #         os.makedirs(path)
+        
+    #     # x_array = list(torch.split(input,1,1))
+    #     utils.save_image(
+    #         input,
+    #         'activation_map.png',
+    #         nrow=10,
+    #         normalize=True,
+    #         range=(-1, 1))
 
     def forward(self, input, tranforms_dict_list):
         out = input
@@ -248,6 +267,8 @@ class ManipulationLayer(nn.Module):
             if transform_dict['layerID'] == -1:
                 self.save_activations(input, transform_dict['index'])
             if transform_dict['layerID'] == self.layerID:
+                # self.save_activations(input, transform_dict['indicies'], "original")
                 out = self.layer_options[transform_dict['transformID']](out, transform_dict['params'], transform_dict['indicies'])
+                # self.save_activations(out, transform_dict['indicies'], "manipulated")
         return out
     

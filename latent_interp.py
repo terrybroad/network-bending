@@ -87,8 +87,9 @@ def get_slerp_loop_noise(nb_latents, nb_interp, shape):
         latent_interps = np.vstack((latent_interps, latent_interp))
         return latent_interps
 
+
 def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims):
-    slerps = get_slerp_loop(32, 35)
+    slerps = get_slerp_loop(32, 45)
     # noise_slerps = []
     # noise_shape_list = get_noise_list(args.size)
     # for shape in noise_shape_list:

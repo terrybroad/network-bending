@@ -28,7 +28,7 @@ all-transforms:
   feature-param: 
 - layer: 1
   transform: "translate"
-  params: [0.5, -.2]
+  params: [0.5, 0]
   features: "all"
   feature-param: 
 - layer: 1
@@ -57,8 +57,8 @@ all-transforms:
   features: "all"
   feature-param: 
 - layer: 1
-  transform: "binary-tresh"
-  params: []
+  transform: "binary-thresh"
+  params: [0.5]
   features: "all"
   feature-param: 
 - layer: 1
