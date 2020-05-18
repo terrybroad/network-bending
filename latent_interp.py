@@ -96,6 +96,7 @@ def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_
     #     noise_slerps.append(get_slerp_loop_noise(32, 35, shape)) 
     t_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
     for i in range(len(slerps)):
+        print('generating frame: ' + str(i))
         input = torch.tensor(slerps[i])
         input = input.view(1,512)
         input = input.to(device)
