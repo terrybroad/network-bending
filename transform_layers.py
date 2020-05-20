@@ -267,8 +267,8 @@ class ManipulationLayer(nn.Module):
             if transform_dict['layerID'] == -1:
                 self.save_activations(input, transform_dict['index'])
             if transform_dict['layerID'] == self.layerID:
-                # self.save_activations(input, transform_dict['indicies'], "original")
+                #self.save_activations(input, transform_dict['indicies'], "original")
                 out = self.layer_options[transform_dict['transformID']](out, transform_dict['params'], transform_dict['indicies'])
-                # self.save_activations(out, transform_dict['indicies'], "manipulated")
+                #self.save_activations(out, transform_dict['indicies'], transform_dict['transformID'])
         return out
     

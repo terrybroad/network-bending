@@ -54,6 +54,26 @@ def generate_both(args, g_ema, device, mean_latent, yaml_config, cluster_config,
                 normalize=True,
                 range=(-1, 1))
 
+def generate_from_multiple_transforms(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims):
+    with torch.no_grad():
+        g_ema.eval()
+        sample_z = torch.randn(args.sample, args.latent, device=device)
+        transform_dict_list_list = create_transforms_dict_list_list(yaml_config,cluster_config, layer_channel_dims)
+        i = 0
+        for t_dict_list in transform_dict_list_list:
+            sample, _ = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
+            
+            if not os.path.exists('sample'):
+                os.makedirs('sample')
+
+            utils.save_image(
+                sample,
+                f'sample/{str(i).zfill(6)}.png',
+                nrow=1,
+                normalize=True,
+                range=(-1, 1))
+            i+=1
+
 def generate_from_latent(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims, latent, noise):
     with torch.no_grad():
         g_ema.eval()
@@ -89,8 +109,9 @@ if __name__ == '__main__':
     parser.add_argument('--channel_multiplier', type=int, default=2)
     parser.add_argument('--config', type=str, default="configs/example_transform_config.yaml")
     parser.add_argument('--load_latent', type=str, default="") 
-    parser.add_argument('--generate_both',type=int, default=0)
     parser.add_argument('--clusters', type=str, default="configs/example_cluster_dict.yaml")
+    parser.add_argument('--generate_both',type=int, default=0)
+    parser.add_argument('--multiple_transforms',type=int, default=0)
 
     args = parser.parse_args()
 
@@ -98,6 +119,7 @@ if __name__ == '__main__':
     args.n_mlp = 8
 
     yaml_config = {}
+    
     with open(args.config, 'r') as stream:
         try:
             yaml_config = yaml.load(stream)
@@ -132,13 +154,19 @@ if __name__ == '__main__':
         mean_latent = None
     
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
-    transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
+    if args.multiple_transforms == 1:
+        transform_dict_list = create_transforms_dict_list_list(yaml_config, cluster_config, layer_channel_dims)
+    else:
+        transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
 
     if args.load_latent == "":
-        if args.generate_both == 0:
-            generate(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
-        else:
+        if args.generate_both == 1:
             generate_both(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
+        elif args.multiple_transforms == 1:
+            generate_from_multiple_transforms(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
+        else:
+            generate(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
+
     else:
         latent=torch.load(args.load_latent)['latent']
         noises=torch.load(args.load_latent)['noises']
