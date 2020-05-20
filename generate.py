@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--channel_multiplier', type=int, default=2)
     parser.add_argument('--config', type=str, default="configs/example_transform_config.yaml")
     parser.add_argument('--load_latent', type=str, default="") 
-    parser.add_argument('--load_clusters', type=str, default="")
+    parser.add_argument('--clusters', type=str, default="configs/example_cluster_dict.yaml")
 
     args = parser.parse_args()
 
@@ -78,8 +78,8 @@ if __name__ == '__main__':
             print(exc)
     
     cluster_config = {}
-    if args.load_clusters != "":
-        with open(args.load_clusters, 'r') as stream:
+    if args.clusters != "":
+        with open(args.clusters, 'r') as stream:
             try:
                 cluster_config = yaml.load(stream)
             except yaml.YAMLError as exc:
