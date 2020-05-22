@@ -503,7 +503,7 @@ class Generator(nn.Module):
                     getattr(self.noises, f'noise_{i}') for i in range(self.num_layers)
                 ]
                 for i, n in enumerate(noise):
-                    new_n = n + (0.25*torch.randn(n.size(), device='cuda'))
+                    new_n = n # + (0.25*torch.randn(n.size(), device='cuda'))
                     noise[i] = new_n
 
         if truncation < 1:

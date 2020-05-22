@@ -87,9 +87,9 @@ def get_slerp_loop_noise(nb_latents, nb_interp, shape):
         latent_interps = np.vstack((latent_interps, latent_interp))
         return latent_interps
 
-
+#1 min slerps = get_slerp_loop(32, 45)
 def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims):
-    slerps = get_slerp_loop(32, 45)
+    slerps = get_slerp_loop(40, 30)
     # noise_slerps = []
     # noise_shape_list = get_noise_list(args.size)
     # for shape in noise_shape_list:
@@ -103,7 +103,7 @@ def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_
         # noises = []
         # for layer_n in noise_slerps:
         #     noises.append(torch.tensor(layer_n[i].to(device)))
-        image, _ = g_ema([input],truncation=args.truncation, randomize_noise=False, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
+        image, _ = g_ema([input],truncation=args.truncation, randomize_noise=True, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
 
         if not os.path.exists('interp'):
             os.makedirs('interp')
