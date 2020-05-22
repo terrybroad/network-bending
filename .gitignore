@@ -211,4 +211,4 @@ install_manifest.txt
 !configs/example_cluster_dict.yaml
 
 #figures
-!figures/header.png
+!figures/*.png
