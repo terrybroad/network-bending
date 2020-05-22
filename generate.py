@@ -2,7 +2,6 @@ import argparse
 import torch
 import yaml
 import os
-import faulthandler
 
 from torchvision import utils
 from model import Generator
@@ -107,7 +106,6 @@ if __name__ == '__main__':
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
     transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
     
-    faulthandler.enable()
     if args.load_latent == "":
         generate(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
     else:
