@@ -3,9 +3,11 @@
 ![Header image](figures/header.png)
 
 **Network Bending: Manipulating The Inner Representations of Deep Generative Models**
+
 Terence Broad, Frederic Fol Leymarie, Mick Grierson
 
 Paper: https://arxiv.org/abs/2005.12420
+
 Video: https://youtu.be/IlSMQ2RRTh8
 
 Abstract: *We introduce a new framework for interacting with and manipulating deep generative models that we call *network bending*. We present a comprehensive set of deterministic transformations that can be inserted as distinct layers into the computational graph of a trained generative neural network and applied during inference. In addition, we present a novel algorithm for clustering features based on their spatial activation maps. This allows features to be grouped together based on spatial similarity in an unsupervised fashion. This results in the meaningful manipulation of sets of features that correspond to the generation of a broad array of semantically significant aspects of the generated images. We demonstrate these transformations on the official pre-trained StyleGAN2 model trained on the FFHQ dataset. In doing so, we lay the groundwork for future interactive multimedia systems where the inner representation of deep generative models are manipulated for greater creative expression, whilst also increasing our understanding of how such "black-box systems'' can be more meaningfully interpreted.*
