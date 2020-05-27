@@ -25,7 +25,7 @@ In other layers sets of feautures are responsible for the generation of other ki
 
 Such as the spatial formation of the face, the highlights on facial regions, the generation of textures or the contrast of colours in the image. 
 
-We can also chain multiple transformation together to produce very distinctive and unusual results:
+Transformations can also been chained together to produce distinctive and unusual results:
 
 ![Cluster comparison](figures/chaining_transforms.png)
 
@@ -47,7 +47,7 @@ To build the custom operators you can use the bash script accompanying with the 
 
   
 
-> chmod +x ./build_custom_trasnforms.sh
+> chmod +x ./build_custom_transforms.sh
 
   
 
