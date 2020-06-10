@@ -89,7 +89,7 @@ def get_slerp_loop_noise(nb_latents, nb_interp, shape):
 
 #1 min slerps = get_slerp_loop(32, 45)
 def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims):
-    slerps = get_slerp_loop(40, 30)
+    slerps = get_slerp_loop(32, 45)
     # noise_slerps = []
     # noise_shape_list = get_noise_list(args.size)
     # for shape in noise_shape_list:
@@ -103,7 +103,7 @@ def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_
         # noises = []
         # for layer_n in noise_slerps:
         #     noises.append(torch.tensor(layer_n[i].to(device)))
-        image, _ = g_ema([input],truncation=args.truncation, randomize_noise=True, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
+        image, _ = g_ema([input],truncation=args.truncation, randomize_noise=False, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
 
         if not os.path.exists('interp'):
             os.makedirs('interp')
@@ -116,51 +116,31 @@ def interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_
                     range=(-1, 1),
                     padding=0)
 
-def rotate_static(generator, step, mean_style):
-    slerps = get_slerp_interp(1, 1)
-
-    sub_divisions = 100
-    for i in range(10):
-        #cols = np.stack((slerps1[i], slerps2[i]))
-        #cols = np.stack((slerps1[i]))
-        #input=torch.tensor(cols)
-        input = torch.tensor(slerps[0])
-        input = input.view(1,512)
-        input = input.to(device)
-        images = []
-        images.append(generator(input,
-            step=step,alpha=1,
-            mean_style=mean_style,
-            style_weight=0.7,
-            erode=i))
-
-        for j in range(8):
-            im = generator(input,
-            step=step,alpha=1,
-            mean_style=mean_style,
-            style_weight=0.7,
-            rotate=j,
-            erode=i)
-            images.append(im)
-            if not os.path.exists('sample/'+str(j)):
-                os.makedirs('sample/'+str(j))
-            utils.save_image( 
-                im,
-                'sample/'+str(j)+'/'+str(i + 101).zfill(6)+'_slerp.png',
-                nrow=1,
-                normalize=True,
-                range=(-1, 1),
-                padding=0)
-
-        image = torch.cat(images)
-        utils.save_image( 
-                    image,
-                    'sample/'+str(i + 101).zfill(6)+'_hstrip.png',
-                    nrow=1,
-                    normalize=True,
-                    range=(-1, 1),
-                    padding=0)
+def multiple_transform_interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims):
+    slerps = get_slerp_loop(32, 45)
     
+    transform_dict_list_list = create_transforms_dict_list_list(yaml_config,cluster_config, layer_channel_dims)
+    t_index = 0
+    for t_dict_list in transform_dict_list_list:
+        for i in range(len(slerps)):
+            print('generating frame: ' + str(i))
+            input = torch.tensor(slerps[i])
+            input = input.view(1,512)
+            input = input.to(device)
+            image, _ = g_ema([input],truncation=args.truncation, randomize_noise=False, truncation_latent=mean_latent, transform_dict_list=t_dict_list)
+
+            if not os.path.exists('interp/'+str(t_index)+'/'):
+                os.makedirs('interp/'+str(t_index)+'/')
+            
+            utils.save_image( 
+                        image,
+                        'interp/'+str(t_index)+'/'+str(i + 1).zfill(6)+'.png',
+                        nrow=1,
+                        normalize=True,
+                        range=(-1, 1),
+                        padding=0)
+        t_index += 1
+
 
 if __name__ == '__main__':
     device = 'cuda'
@@ -176,7 +156,8 @@ if __name__ == '__main__':
     parser.add_argument('--channel_multiplier', type=int, default=2)
     parser.add_argument('--config', type=str, default="configs/example_transform_config.yaml")
     parser.add_argument('--load_latent', type=str, default="") 
-    parser.add_argument('--load_clusters', type=str, default="")
+    parser.add_argument('--load_clusters', type=str, default="configs/example_cluster_dict.yaml")
+    parser.add_argument('--multiple_transforms',type=int, default=0)
 
     args = parser.parse_args()
 
@@ -218,10 +199,18 @@ if __name__ == '__main__':
         mean_latent = None
     
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
-    transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
+    
+    if args.multiple_transforms == 1:
+        transform_dict_list = create_transforms_dict_list_list(yaml_config, cluster_config, layer_channel_dims)
+    else:
+        transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
 
     if args.load_latent == "":
-        interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
+        if args.multiple_transforms == 1:
+            multiple_transform_interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
+        else:
+            interp(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
+    
     # else:
         # Do nothing for now
         # latent=torch.load(args.load_latent)['latent']
