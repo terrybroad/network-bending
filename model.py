@@ -361,7 +361,7 @@ class ToRGB(nn.Module):
         if skip is not None:
             skip = self.upsample(skip)
 
-            out = out + skip
+            # out = out + skip
 
         return out
 

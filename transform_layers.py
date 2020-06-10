@@ -11,6 +11,7 @@ torch.ops.load_library("transforms/erode/build/liberode.so")
 torch.ops.load_library("transforms/dilate/build/libdilate.so")
 torch.ops.load_library("transforms/scale/build/libscale.so")
 torch.ops.load_library("transforms/rotate/build/librotate.so")
+torch.ops.load_library("transforms/resize/build/libresize.so")
 torch.ops.load_library("transforms/translate/build/libtranslate.so")
 
 class Erode(nn.Module):
@@ -65,6 +66,24 @@ class Translate(nn.Module):
                 tf = torch.ops.my_ops.translate(d_,params[0], params[1])
                 tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
                 x_array[i] = tf
+        return torch.cat(x_array,1)
+
+class Resize(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        if not isinstance(params[0], float) or not isinstance(params[1], float):
+            print('Resize must have two parameters, which should be positive floats.')
+            # raise ValueError
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            d_ = torch.squeeze(dim)
+            print(d_.size())
+            tf = torch.ops.my_ops.resize(d_,params[0], params[1])
+            print(tf.size())
+            tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+            x_array[i] = tf
         return torch.cat(x_array,1)
 
 class Scale(nn.Module):
@@ -207,6 +226,7 @@ class ManipulationLayer(nn.Module):
         self.translate = Translate()
         self.scale = Scale()
         self.rotate = Rotate()
+        self.resize = Resize()
         self.flip_h = FlipHorizontal()
         self.flip_v = FlipVertical()
         self.invert = Invert()
@@ -220,6 +240,7 @@ class ManipulationLayer(nn.Module):
             "translate": self.translate,
             "scale": self.scale,
             "rotate": self.rotate,
+            "resize": self.resize,
             "flip-h": self.flip_h,
             "flip-v": self.flip_v,
             "invert": self.invert,
