@@ -6,6 +6,10 @@
 
 Terence Broad, Frederic Fol Leymarie, Mick Grierson
 
+Paper: https://arxiv.org/abs/2005.12420
+
+Video: https://youtu.be/IlSMQ2RRTh8
+
 Abstract: *We introduce a new framework for interacting with and manipulating deep generative models that we call *network bending*. We present a comprehensive set of deterministic transformations that can be inserted as distinct layers into the computational graph of a trained generative neural network and applied during inference. In addition, we present a novel algorithm for clustering features based on their spatial activation maps. This allows features to be grouped together based on spatial similarity in an unsupervised fashion. This results in the meaningful manipulation of sets of features that correspond to the generation of a broad array of semantically significant aspects of the generated images. We demonstrate these transformations on the official pre-trained StyleGAN2 model trained on the FFHQ dataset. In doing so, we lay the groundwork for future interactive multimedia systems where the inner representation of deep generative models are manipulated for greater creative expression, whilst also increasing our understanding of how such "black-box systems'' can be more meaningfully interpreted.*
 
 ## Examples
@@ -21,7 +25,7 @@ In other layers sets of feautures are responsible for the generation of other ki
 
 Such as the spatial formation of the face, the highlights on facial regions, the generation of textures or the contrast of colours in the image. 
 
-We can also chain multiple transformation together to produce very distinctive and unusual results:
+Transformations can also been chained together to produce distinctive and unusual results:
 
 ![Cluster comparison](figures/chaining_transforms.png)
 
@@ -33,8 +37,6 @@ We can also chain multiple transformation together to produce very distinctive a
 * Libtorch 1.5 (pre-C++11) [download here](https://pytorch.org/get-started/locally/)
 * PyYAML
 
-  
-
 ## Build custom torchscript operators
 
 We have built a number of torchscript operators using OpenCV and libtorch, you will have to have downloaded libtorch and installed the correct version of OpenCV for this to work. See requirements above or [refer to the tutorial for writing your own torchscript operators](https://pytorch.org/tutorials/advanced/torch_script_custom_ops.html) for me details.
@@ -45,7 +47,7 @@ To build the custom operators you can use the bash script accompanying with the 
 
   
 
-> chmod +x ./build_custom_trasnforms.sh
+> chmod +x ./build_custom_transforms.sh
 
   
 
@@ -132,6 +134,15 @@ The fourth and fifth are `transform` and `params`. For transform you pass it a s
   
 > python projector.py --ckpt [CHECKPOINT] --size [GENERATOR_OUTPUT_SIZE] IMAGE1 ...
 
+## Additional resources
+
+Examples of layer wide transformations being applied to every layer: https://drive.google.com/open?id=1hC9qSw57g2QZ3IggCWEa8BUoY7TcYFfR
+
+Examples of various transformations applied to different clusters: https://drive.google.com/open?id=1oaNco1L1lu7gGgWKNMGqA_vFUFIOVmVx
+
+Trained ShuffleNet CNN models used for clustering: https://drive.google.com/open?id=176GlteP_C3z-EvZDm69uJC8fziwrQOBw
+
+Training and test set used to train CNN classifiers used for clustering: https://drive.google.com/open?id=1F3TOkR8Cu2EOgalXSc1kEpjHwxd_CCbo
 
 ## Acknowledgements
 
