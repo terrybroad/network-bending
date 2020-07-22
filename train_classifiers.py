@@ -12,15 +12,15 @@ from tensorboardX import SummaryWriter
 from clustering_models import FeatureClassifier
 
 
-def train_classifier(layer, batch_size, n_epochs=100, bottleneck=10):
+def train_classifier(layer, batch_size, n_epochs, bottleneck, data_str, save_str):
     transform = transforms.Compose([transforms.Grayscale(),transforms.ToTensor()])
-    dataset = datasets.ImageFolder('/home/terence/data/network-bending/activations/'+str(layer),  transform=transform)
+    dataset = datasets.ImageFolder(data_str +'/'+str(layer),  transform=transform)
     device = 'cuda'
     writer = SummaryWriter()
     validation_split = 0.1
     dataset_len = len(dataset)
     indices = list(range(dataset_len))
-    data_save_root = 'models/classifiers/'+str(layer)+"/"
+    data_save_root = save_str+'/'+str(layer)+"/"
     if not os.path.exists(data_save_root):
                 os.makedirs(data_save_root)
 
@@ -49,12 +49,7 @@ def train_classifier(layer, batch_size, n_epochs=100, bottleneck=10):
         "batch size" : batch_size,
         "Learning rate": lr
     }
-    writer.add_hparams(hparam_dict, {})
-    total_it = 0
-    for epoch in range(n_epochs):
-        print('Epoch {}/{}'.format(epoch, n_epochs - 1))
-        print('-' * 10)
-        classifier.zero_grad()
+    writer.add_hparams(hparam_dict, {})/home/terence/data/network-bending/activations/
         optimizer.zero_grad()
         # Each epoch has a training and validation phase
         for phase in ['train', 'valid']:
@@ -98,5 +93,15 @@ def train_classifier(layer, batch_size, n_epochs=100, bottleneck=10):
     writer.export_scalars_to_json(data_save_root+"all_scalars.json")
     writer.close()   
 
+if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--layer', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=100)
+    parser.add_argument('--n_epochs', type=int, default=50)
+    parser.add_argument('--bottleneck' type=int, default=10)
+    parser.add_argument('--data', type=str, default='activations/')
+    parser.add_argument('--save',type=str, default='models/classifiers')
+    args = parser.parse_args()
 
-train_classifier(layer=1, batch_size=500, n_epochs=100, bottleneck=10)
+    train_classifier(layer=args.layer, batch_size=args.batch_size, n_epochs=args.n_epochs, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
