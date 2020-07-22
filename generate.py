@@ -91,7 +91,6 @@ if __name__ == '__main__':
     checkpoint = torch.load(args.ckpt)
     
     ext_state_dict  = torch.load(args.ckpt)['g_ema']
-    g_ema.load_state_dict(checkpoint['g_ema'])
     new_state_dict.update(ext_state_dict)
     g_ema.load_state_dict(new_state_dict)
     g_ema.eval()
