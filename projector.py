@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--ckpt', type=str, required=True)
-    parser.add_argument('--size', type=int, default=256)
+    parser.add_argument('--size', type=int, default=1024)
     parser.add_argument('--lr_rampup', type=float, default=0.05)
     parser.add_argument('--lr_rampdown', type=float, default=0.25)
     parser.add_argument('--lr', type=float, default=0.1)

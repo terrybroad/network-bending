@@ -12,10 +12,10 @@ from util import *
 def generate(args, g_ema, device, mean_latent, t_dict_list):
     with torch.no_grad():
         g_ema.eval()
-        for i in tqdm(range(args.pics)):
+        for i in tqdm(range(args.num_samples)):
             extra_t_dict_list =  copy.deepcopy(t_dict_list)
             extra_t_dict_list.append({'layerID': -1, 'index': i})
-            sample_z = torch.randn(args.sample, args.latent, device=device)
+            sample_z = torch.randn(1, args.latent, device=device)
             sample, _ = g_ema([sample_z], 
                                 truncation=args.truncation, 
                                 truncation_latent=mean_latent, 
@@ -36,8 +36,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--size', type=int, default=1024)
-    parser.add_argument('--sample', type=int, default=1)
-    parser.add_argument('--pics', type=int, default=20)
+    parser.add_argument('--num_samples', type=int, default=20)
     parser.add_argument('--truncation', type=float, default=0.5)
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="stylegan2-ffhq-config-f.pt")

@@ -52,7 +52,7 @@ def get_clusters_from_generated_greedy(args, g_ema, device, mean_latent, t_dict_
         
         for i in tqdm(range(args.num_samples)):
             print("processing sample: " + str(i))
-            sample_z = torch.randn(args.sample, args.latent, device=device) 
+            sample_z = torch.randn(1, args.latent, device=device) 
             sample, activation_maps = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list, return_activation_maps=True)
             for index, activations in enumerate(activation_maps):
                 true_index = index+1
@@ -110,7 +110,7 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
 
         for i in tqdm(range(args.num_samples)):
             print("processing sample: " + str(i))
-            sample_z = torch.randn(args.sample, args.latent, device=device) 
+            sample_z = torch.randn(1, args.latent, device=device) 
             sample, activation_maps = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list, return_activation_maps=True)
             for index, activations in enumerate(activation_maps):
                 true_index = index+1
@@ -158,7 +158,7 @@ def get_clusters_from_latent(args, g_ema, device, mean_latent, t_dict_list, yaml
         sample, activation_maps = g_ema([slce_latent], input_is_latent=True, noise=noises, transform_dict_list=t_dict_list, return_activation_maps=True)
         print(len(activation_maps))
         feature_cluster_dict = {}
-        for index, activations in enumerate(activation_maps):
+        for index, activa'train_classifiers.py' tions in enumerate(activation_maps):
             true_index = index+1
             classifier = FeatureClassifier(true_index)
             classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
@@ -194,7 +194,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--size', type=int, default=1024)
-    parser.add_argument('--sample', type=int, default=1)
     parser.add_argument('--num_samples', type=int, default=20)
     parser.add_argument('--truncation', type=float, default=0.5)
     parser.add_argument('--truncation_mean', type=int, default=4096)
