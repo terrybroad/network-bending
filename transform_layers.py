@@ -249,25 +249,26 @@ class ManipulationLayer(nn.Module):
             "ablate": self.ablate
         }
 
-    def save_activations(self, input, index):
-        path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
-        if not os.path.exists(path):
-            os.makedirs(path)
-        
-        x_array = list(torch.split(input,1,1))
-        for i, activation in enumerate(x_array):
-            utils.save_image(
-                torch.squeeze(activation),
-                path+str(i).zfill(3)+'.png',
-                nrow=1,
-                normalize=True,
-                range=(-1, 1))
+    def save_activations(self, input, index, l_min, l_max):
+        if self.layerID >= l_min and self.layerID <= l_max:
+            path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
+            if not os.path.exists(path):
+                os.makedirs(path)
+            
+            x_array = list(torch.split(input,1,1))
+            for i, activation in enumerate(x_array):
+                utils.save_image(
+                    torch.squeeze(activation),
+                    path+str(i).zfill(3)+'.png',
+                    nrow=1,
+                    normalize=True,
+                    range=(-1, 1))
 
     def forward(self, input, tranforms_dict_list):
         out = input
         for transform_dict in tranforms_dict_list:
             if transform_dict['layerID'] == -1:
-                self.save_activations(input, transform_dict['index'])
+                self.save_activations(input, transform_dict['index'], transform_dict['params'][0], transform_dict['params'][1])
             if transform_dict['layerID'] == self.layerID:
                 out = self.layer_options[transform_dict['transformID']](out, transform_dict['params'], transform_dict['indicies'])
         return out

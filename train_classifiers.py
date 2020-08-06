@@ -1,5 +1,6 @@
 import os
 import torch
+import argparse
 import numpy as np
 from torch import nn, optim
 from torch.nn import functional as F
@@ -49,15 +50,16 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck, data_str, save_str
         "batch size" : batch_size,
         "Learning rate": lr
     }
-    writer.add_hparams(hparam_dict, {})/home/terence/data/network-bending/activations/
-        optimizer.zero_grad()
+    optimizer.zero_grad()
+    writer.add_hparams(hparam_dict, {})
+    total_it = 0
+    for epoch in range(n_epochs):
         # Each epoch has a training and validation phase
         for phase in ['train', 'valid']:
             if phase == 'train':
                 classifier.train(True)  # Set model to training mode
             else:
-                classifier.train(False)  # Set model to evaluate mode
-
+                optimizer.zero_grad()
             running_loss = 0.0
             epoch_it = 0
             for image, label in data_loaders[phase]:
@@ -71,7 +73,7 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck, data_str, save_str
                 loss = loss.to(device)
                 running_loss += loss.detach()
                 if phase == 'train':
-                    print("epoch: " + str(epoch) + ", step: "+str(epoch_it).zfill(6) +", training loss: " + str(float(loss)))
+                    print("layer: " +str(layer)+ ", epoch: " +str(epoch)+ ", step: "+str(epoch_it).zfill(6) +", training loss: " + str(float(loss)))
                     writer.add_scalar('data/train_loss_continous', loss, total_it)
                     loss.backward()
                     optimizer.step()
@@ -86,8 +88,8 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck, data_str, save_str
                 print("Epoch: "+str(epoch).zfill(6) +", valid loss: " + str(epoch_loss))
                 writer.add_scalar('data/valid_loss_epoch', epoch_loss, epoch)
 
-        if epoch % 10 == 0:
-            torch.save(classifier.state_dict(), data_save_root+'/classifier'+str(layer)+'_'+str(epoch)+'.pt')    
+    if epoch % 10 == 0:
+        torch.save(classifier.state_dict(), data_save_root+'/classifier'+str(layer)+'_'+str(epoch)+'.pt')    
 
     torch.save(classifier.state_dict(), data_save_root +'/classifier'+str(layer)+'_final.pt')  
     writer.export_scalars_to_json(data_save_root+"all_scalars.json")
@@ -96,12 +98,14 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck, data_str, save_str
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--layer', type=int, default=1)
     parser.add_argument('--batch_size', type=int, default=100)
     parser.add_argument('--n_epochs', type=int, default=50)
-    parser.add_argument('--bottleneck' type=int, default=10)
+    parser.add_argument('--bottleneck', type=int, default=10)
     parser.add_argument('--data', type=str, default='activations/')
     parser.add_argument('--save',type=str, default='models/classifiers')
+    parser.add_argument('--first_layer', type=int, default=1)
+    parser.add_argument('--last_layer', type=int, default=8)
     args = parser.parse_args()
 
-    train_classifier(layer=args.layer, batch_size=args.batch_size, n_epochs=args.n_epochs, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
+    for i in range(args.first_layer, args.last_layer):
+        train_classifier(layer=i, batch_size=args.batch_size, n_epochs=args.n_epochs, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
