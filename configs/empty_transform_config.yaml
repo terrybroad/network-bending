@@ -1,6 +1,6 @@
 transforms:
 - layer: 0
-  transform: "scalar-multiply"
-  params: [1]
+  transform: "rotate"
+  params: [0]
   features: "random"
   feature-param: 0

@@ -40,7 +40,7 @@ def get_clusters_from_generated_greedy(args, g_ema, device, mean_latent, t_dict_
         feature_cluster_sum_dict = {}
         feature_cluster_dict = {}
         
-        for i in tqdm(range(16)):
+        for i in tqdm(range(args.first_layer, args.last_layer)):
             true_index = i+1
             latent_list = []
             feature_list = []
@@ -97,8 +97,9 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
         feature_cluster_dict = {}
         feature_latent_dict = {}
         
-        for i in tqdm(range(16)):
-            true_index = i+1
+        for i in tqdm(range(args.first_layer, args.last_layer)):
+            print(i)
+            true_index = i
             latent_list = []
             feature_list = []
             latent_ll.append(latent_list)
@@ -106,7 +107,7 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
             feature_cluster_sum_dict[true_index] = {}
             for j in tqdm(range(layer_channel_dims[true_index])):
                 feature_cluster_sum_dict[true_index][j] = 0 
-                latent_ll[i].append(0)
+                latent_ll[i-1].append(0)
 
         for i in tqdm(range(args.num_samples)):
             print("processing sample: " + str(i))
@@ -128,7 +129,7 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
                     latent_ll[index][j] = latent_ll[index][j] + normalised_feat_vec
                     # feature_ll[index].append(j)
         
-        for i in tqdm(range(16)):
+        for i in tqdm(range(args.first_layer, args.last_layer)):
             true_index = i+1
             print("generating clusters for layer: " + str(i))
             cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_ll[i]), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
@@ -158,7 +159,7 @@ def get_clusters_from_latent(args, g_ema, device, mean_latent, t_dict_list, yaml
         sample, activation_maps = g_ema([slce_latent], input_is_latent=True, noise=noises, transform_dict_list=t_dict_list, return_activation_maps=True)
         print(len(activation_maps))
         feature_cluster_dict = {}
-        for index, activa'train_classifiers.py' tions in enumerate(activation_maps):
+        for index, activations in enumerate(activation_maps):
             true_index = index+1
             classifier = FeatureClassifier(true_index)
             classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
@@ -202,6 +203,8 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default="configs/empty_transform_config.yaml")
     parser.add_argument('--load_latent', type=str, default="") 
     parser.add_argument('--classifier_ckpts', type=str, default="models/classifiers")
+    parser.add_argument('--first_layer', type=int, default=1)
+    parser.add_argument('--last_layer', type=int, default=8)
 
     args = parser.parse_args()
 
