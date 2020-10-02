@@ -1,6 +1,6 @@
 import random
 
-def create_layer_channel_dim_dict(channel_multiplier):
+def create_layer_channel_dim_dict(channel_multiplier, n_layers=16):
     layer_channel_dict = {
         0: 512,
         1: 512,
@@ -20,7 +20,7 @@ def create_layer_channel_dim_dict(channel_multiplier):
         15: 16*channel_multiplier,
         16: 16*channel_multiplier
     }
-    return layer_channel_dict
+    return  {k: v for k, v in layer_channel_dict.items() if int(k) <= n_layers}
 
 def create_random_transform_dict(layer, layer_channel_dict, transform, params, percentage):
     layer_dim = layer_channel_dict[layer]

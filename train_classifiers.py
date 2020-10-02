@@ -107,5 +107,5 @@ if __name__ == '__main__':
     parser.add_argument('--last_layer', type=int, default=8)
     args = parser.parse_args()
 
-    for i in range(args.first_layer, args.last_layer):
+    for i in range(args.first_layer, args.last_layer+1):
         train_classifier(layer=i, batch_size=args.batch_size, n_epochs=args.n_epochs, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
