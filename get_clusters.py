@@ -40,7 +40,7 @@ def get_clusters_from_generated_greedy(args, g_ema, device, mean_latent, t_dict_
         feature_cluster_sum_dict = {}
         feature_cluster_dict = {}
         
-        for i in tqdm(range(16)):
+        for i in tqdm(range(args.n_layers)):
             true_index = i+1
             latent_list = []
             feature_list = []
@@ -52,7 +52,7 @@ def get_clusters_from_generated_greedy(args, g_ema, device, mean_latent, t_dict_
         
         for i in tqdm(range(args.num_samples)):
             print("processing sample: " + str(i))
-            sample_z = torch.randn(args.sample, args.latent, device=device) 
+            sample_z = torch.randn(1, args.latent, device=device) 
             sample, activation_maps = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list, return_activation_maps=True)
             for index, activations in enumerate(activation_maps):
                 true_index = index+1
@@ -69,7 +69,7 @@ def get_clusters_from_generated_greedy(args, g_ema, device, mean_latent, t_dict_
                     latent_ll[index].append(feat_vec)
                     feature_ll[index].append(j)
         
-        for i in tqdm(range(16)):
+        for i in tqdm(range(args.n_layers)):
             true_index = i+1
             print("generating clusters for layer: " + str(i))
             cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_ll[i]), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
@@ -97,7 +97,8 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
         feature_cluster_dict = {}
         feature_latent_dict = {}
         
-        for i in tqdm(range(16)):
+        for i in tqdm(range(args.n_layers)):
+            print("I" + str(i))
             true_index = i+1
             latent_list = []
             feature_list = []
@@ -110,7 +111,7 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
 
         for i in tqdm(range(args.num_samples)):
             print("processing sample: " + str(i))
-            sample_z = torch.randn(args.sample, args.latent, device=device) 
+            sample_z = torch.randn(1, args.latent, device=device) 
             sample, activation_maps = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list, return_activation_maps=True)
             for index, activations in enumerate(activation_maps):
                 true_index = index+1
@@ -121,14 +122,14 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
                 classifier.to(device)
                 layer_activation_maps = activation_maps[index]
                 a_map_array = list(torch.split(layer_activation_maps,1,1))
-                for j, map in enumerate(a_map_array):
+                for j, map in enumerate(a_map_array):                  
                     map = map.to(device)
                     feat_vec, class_prob = classifier(map)
                     normalised_feat_vec = feat_vec / args.num_samples
                     latent_ll[index][j] = latent_ll[index][j] + normalised_feat_vec
                     # feature_ll[index].append(j)
         
-        for i in tqdm(range(16)):
+        for i in tqdm(range(args.n_layers)):
             true_index = i+1
             print("generating clusters for layer: " + str(i))
             cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_ll[i]), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
@@ -194,8 +195,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--size', type=int, default=1024)
-    parser.add_argument('--sample', type=int, default=1)
-    parser.add_argument('--num_samples', type=int, default=20)
+    parser.add_argument('--num_samples', type=int, default=1000)
     parser.add_argument('--truncation', type=float, default=0.5)
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="models/stylegan2-ffhq-config-f.pt")
@@ -203,6 +203,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default="configs/empty_transform_config.yaml")
     parser.add_argument('--load_latent', type=str, default="") 
     parser.add_argument('--classifier_ckpts', type=str, default="models/classifiers")
+    parser.add_argument('--n_layers', type=int, default=12)
 
     args = parser.parse_args()
 
@@ -223,7 +224,6 @@ if __name__ == '__main__':
     checkpoint = torch.load(args.ckpt)
     
     ext_state_dict  = torch.load(args.ckpt)['g_ema']
-    g_ema.load_state_dict(checkpoint['g_ema'])
     new_state_dict.update(ext_state_dict)
     g_ema.load_state_dict(new_state_dict)
     g_ema.eval()
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     else:
         mean_latent = None
     
-    layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
+    layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier, args.n_layers)
     transform_dict_list = create_transforms_dict_list(yaml_config, {}, layer_channel_dims)
     
     if args.load_latent == "":

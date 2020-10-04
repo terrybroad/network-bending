@@ -11,6 +11,7 @@ torch.ops.load_library("transforms/erode/build/liberode.so")
 torch.ops.load_library("transforms/dilate/build/libdilate.so")
 torch.ops.load_library("transforms/scale/build/libscale.so")
 torch.ops.load_library("transforms/rotate/build/librotate.so")
+torch.ops.load_library("transforms/resize/build/libresize.so")
 torch.ops.load_library("transforms/translate/build/libtranslate.so")
 
 class Erode(nn.Module):
@@ -65,6 +66,24 @@ class Translate(nn.Module):
                 tf = torch.ops.my_ops.translate(d_,params[0], params[1])
                 tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
                 x_array[i] = tf
+        return torch.cat(x_array,1)
+
+class Resize(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, params, indicies):
+        if not isinstance(params[0], float) or not isinstance(params[1], float):
+            print('Resize must have two parameters, which should be positive floats.')
+            # raise ValueError
+        x_array = list(torch.split(x,1,1))
+        for i, dim in enumerate(x_array):
+            d_ = torch.squeeze(dim)
+            print(d_.size())
+            tf = torch.ops.my_ops.resize(d_,params[0], params[1])
+            print(tf.size())
+            tf = torch.unsqueeze(torch.unsqueeze(tf,0),0)
+            x_array[i] = tf
         return torch.cat(x_array,1)
 
 class Scale(nn.Module):
@@ -207,6 +226,7 @@ class ManipulationLayer(nn.Module):
         self.translate = Translate()
         self.scale = Scale()
         self.rotate = Rotate()
+        self.resize = Resize()
         self.flip_h = FlipHorizontal()
         self.flip_v = FlipVertical()
         self.invert = Invert()
@@ -220,6 +240,7 @@ class ManipulationLayer(nn.Module):
             "translate": self.translate,
             "scale": self.scale,
             "rotate": self.rotate,
+            "resize": self.resize,
             "flip-h": self.flip_h,
             "flip-v": self.flip_v,
             "invert": self.invert,
@@ -228,44 +249,29 @@ class ManipulationLayer(nn.Module):
             "ablate": self.ablate
         }
 
-    def save_activations(self, input, index, additional_str = ""):
-        if additional_str == "":
-            path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
-        else:
-            path = 'sample/' + additional_str + '/activations/'+str(self.layerID) +'/'+str(index) + '/'
-        if not os.path.exists(path):
-            os.makedirs(path)
-        
-        x_array = list(torch.split(input,1,1))
-        for i, activation in enumerate(x_array):
-            utils.save_image(
-                torch.squeeze(activation),
-                path+str(i).zfill(3)+'.png',
-                nrow=1,
-                normalize=True,
-                range=(-1, 1))
-    
-    # def save_activation_grid(self, input, index, additional_str = ""):
-    #     if additional_str == "":
-    #         path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
-    #     else:
-    #         path = 'sample/' + additional_str + str(self.layerID) +'/'+str(index) + '/'
-    #     if not os.path.exists(path):
-    #         os.makedirs(path)
-        
-    #     # x_array = list(torch.split(input,1,1))
-    #     utils.save_image(
-    #         input,
-    #         'activation_map.png',
-    #         nrow=10,
-    #         normalize=True,
-    #         range=(-1, 1))
+    def save_activations(self, input, index, l_min, l_max, additional_str = ""):
+        if self.layerID >= l_min and self.layerID <= l_max:
+            x_array = list(torch.split(input,1,1))
+            for i, activation in enumerate(x_array):
+                if additional_str == "":
+                    path = 'activations/'+str(self.layerID) +'/'+str(index) + '/'
+                else:
+                    path = 'sample/' + additional_str + '/activations/'+str(self.layerID) +'/'+str(index) + '/'
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                
+                utils.save_image(
+                        torch.squeeze(activation),
+                        path+str(i).zfill(3)+'.png',
+                        nrow=1,
+                        normalize=True,
+                        range=(-1, 1))
 
     def forward(self, input, tranforms_dict_list):
         out = input
         for transform_dict in tranforms_dict_list:
             if transform_dict['layerID'] == -1:
-                self.save_activations(input, transform_dict['index'])
+                self.save_activations(input, transform_dict['index'], transform_dict['params'][0], transform_dict['params'][1])
             if transform_dict['layerID'] == self.layerID:
                 #self.save_activations(input, transform_dict['indicies'], "original")
                 out = self.layer_options[transform_dict['transformID']](out, transform_dict['params'], transform_dict['indicies'])

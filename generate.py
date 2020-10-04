@@ -2,7 +2,6 @@ import argparse
 import torch
 import yaml
 import os
-import faulthandler
 
 from torchvision import utils
 from model import Generator
@@ -151,7 +150,6 @@ if __name__ == '__main__':
     checkpoint = torch.load(args.ckpt)
     
     ext_state_dict  = torch.load(args.ckpt)['g_ema']
-    g_ema.load_state_dict(checkpoint['g_ema'])
     new_state_dict.update(ext_state_dict)
     g_ema.load_state_dict(new_state_dict)
     g_ema.eval()
@@ -164,11 +162,16 @@ if __name__ == '__main__':
         mean_latent = None
     
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
+<<<<<<< HEAD
     if args.multiple_transforms == 1:
         transform_dict_list = create_transforms_dict_list_list(yaml_config, cluster_config, layer_channel_dims)
     else:
         transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
 
+=======
+    transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
+    
+>>>>>>> master
     if args.load_latent == "":
         if args.generate_both == 1:
             generate_both(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)

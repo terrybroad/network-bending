@@ -6,7 +6,14 @@ fi
 
 echo "$1"
 
-cd transforms/dilate
+cd transforms/resize
+mkdir -p build
+cd build
+rm -rf *
+cmake -DCMAKE_PREFIX_PATH=$1 ..
+make -j
+
+cd ../../dilate
 mkdir -p build
 cd build
 rm -rf *

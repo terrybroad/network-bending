@@ -1,19 +1,21 @@
 transforms:
-- layer: 6
+- layer: 4
+  transform: "translate"
+  params: [0.25, 0.0]
+  features: "all"
+  feature-param: 
+- layer: 5
+  transform: "ablate"
+  params: []
+  features: "cluster"
+  feature-param: 2
+- layer: 12
   transform: "binary-thresh"
   params: [0.5]
   features: "random"
-  feature-param: 0.75
-- layer: 4
-  transform: "invert"
-  params: []
-  features: "all"
-  feature-param: 
-- layer: 8
-  transform: "scalar-multiply"
-  params: [1]
-  features: "random"
   feature-param: 0.5
+
+
 
 all-transforms:
 - layer: 1

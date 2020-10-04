@@ -207,3 +207,6 @@ install_manifest.txt
 !configs/sample_strip_config.yaml
 !configs/empty_transform_config.yaml
 !configs/example_cluster_dict.yaml
+
+#figures
+!figures/*.png
