@@ -188,13 +188,18 @@ if __name__ == '__main__':
     parser.add_argument('--truncation_mean', type=int, default=4096)
     parser.add_argument('--ckpt', type=str, default="models/stylegan2-ffhq-config-f.pt")
     parser.add_argument('--channel_multiplier', type=int, default=2)
-    parser.add_argument('--config', type=str, default="sample_strip_config.yaml")
+    parser.add_argument('--config', type=str, default="configs/sample_strip_config.yaml")
     parser.add_argument('--load_clusters', type=str, default="")
 
     args = parser.parse_args()
 
     args.latent = 512
     args.n_mlp = 8
+
+    if args.size == 1024:
+        args.n_layers = 16
+    elif args.size == 256:
+        args.n_layers = 12
 
     yaml_config = {}
     with open(args.config, 'r') as stream:
@@ -231,7 +236,7 @@ if __name__ == '__main__':
     else:
         mean_latent = None
     
-    layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
+    layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier, args.n_layers)
     
     if args.load_clusters == "":
         generate_all_layer(args, g_ema, device, mean_latent, layer_channel_dims, yaml_config)

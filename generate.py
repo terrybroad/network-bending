@@ -162,16 +162,11 @@ if __name__ == '__main__':
         mean_latent = None
     
     layer_channel_dims = create_layer_channel_dim_dict(args.channel_multiplier)
-<<<<<<< HEAD
     if args.multiple_transforms == 1:
         transform_dict_list = create_transforms_dict_list_list(yaml_config, cluster_config, layer_channel_dims)
     else:
         transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
 
-=======
-    transform_dict_list = create_transforms_dict_list(yaml_config, cluster_config, layer_channel_dims)
-    
->>>>>>> master
     if args.load_latent == "":
         if args.generate_both == 1:
             generate_both(args, g_ema, device, mean_latent, yaml_config, cluster_config, layer_channel_dims)
