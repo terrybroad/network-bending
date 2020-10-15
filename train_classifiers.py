@@ -95,6 +95,78 @@ def train_classifier(layer, batch_size, n_epochs, bottleneck, data_str, save_str
     writer.export_scalars_to_json(data_save_root+"all_scalars.json")
     writer.close()   
 
+def test_classifier(layer, batch_size, bottleneck, data_str, save_str):
+    transform = transforms.Compose([transforms.Grayscale(),transforms.ToTensor()])
+    dataset = datasets.ImageFolder(data_str +'/'+str(layer),  transform=transform)
+    device = 'cuda'
+    writer = SummaryWriter()
+    # validation_split = 0.1
+    # dataset_len = len(dataset)
+    # indices = list(range(dataset_len))
+    data_save_root = save_str+'/'+str(layer)+"/"
+    # if not os.path.exists(data_save_root):
+    #             os.makedirs(data_save_root)
+
+    # # Randomly splitting indices:
+    # val_len = int(np.floor(validation_split * dataset_len))
+    # validation_idx = np.random.choice(indices, size=val_len, replace=False)
+    # train_idx = list(set(indices) - set(validation_idx))
+
+    # ## Defining the samplers for each phase based on the random indices:
+    # train_sampler = SubsetRandomSampler(train_idx)
+    # validation_sampler = SubsetRandomSampler(validation_idx)
+
+    test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
+    # data_loaders = {"train": train_loader, "valid": validation_loader}
+    # data_lengths = {"train": len(train_idx), "valid": val_len}
+
+    classifier = FeatureClassifier(layer, bottleneck).to(device)
+    c_state_dict = torch.load(data_save_root +'/classifier'+str(layer)+'_final.pt')
+    classifier.load_state_dict(c_state_dict)
+    criterion = nn.CrossEntropyLoss()
+    criterion.to(device)
+    # lr = 0.0001
+    # optimizer = optim.Adam(classifier.parameters(), lr=0.0001)
+
+    # hparam_dict = {
+    #     "Layer" : layer,
+    #     "batch size" : batch_size,
+    #     "Learning rate": lr
+    # }
+    # writer.add_hparams(hparam_dict, {})
+    running_loss = 0.0
+    total_it = 0
+    for image, label in test_loader:
+        classifier.zero_grad()
+        # optimizer.zero_grad()
+        image = image.to(device)
+        norm_image = ( image - 0.5 ) * 2
+        label = label.to(device)
+        vec, x_prob = classifier(norm_image)
+        loss = criterion(x_prob, label)
+        loss = loss.to(device)
+        print(loss)
+        running_loss += loss.detach()
+        total_it +=1
+        # if phase == 'train':
+        #     print("layer: " +str(layer)+ ", epoch: " +str(epoch)+ ", step: "+str(epoch_it).zfill(6) +", training loss: " + str(float(loss)))
+        #     writer.add_scalar('data/train_loss_continous', loss, total_it)
+        #     loss.backward()
+        #     optimizer.step()
+        #     total_it +=1                # optimizer = scheduler(optimizer, epoch)
+        # epoch_it +=1
+    
+    total_loss = running_loss / len(test_loader)
+    print("total it: " +str(total_it))
+    print("len: " + str(len(test_loader)))
+
+    print("layer: " +str(layer) + " total loss: " + str(total_loss))
+    # writer.add_scalar('data/valid_loss_epoch', epoch_loss, epoch)
+
+    # torch.save(classifier.state_dict(), data_save_root +'/classifier'+str(layer)+'_final.pt')  
+    # writer.export_scalars_to_json(data_save_root+"all_scalars.json")
+    # writer.close()   
+
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
@@ -105,7 +177,12 @@ if __name__ == '__main__':
     parser.add_argument('--save',type=str, default='models/classifiers')
     parser.add_argument('--first_layer', type=int, default=1)
     parser.add_argument('--last_layer', type=int, default=8)
+    parser.add_argument('--test', type=int, default=0)
     args = parser.parse_args()
 
-    for i in range(args.first_layer, args.last_layer+1):
-        train_classifier(layer=i, batch_size=args.batch_size, n_epochs=args.n_epochs, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
+    if args.test == 0:
+        for i in range(args.first_layer, args.last_layer+1):
+            train_classifier(layer=i, batch_size=args.batch_size, n_epochs=args.n_epochs, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
+    else:
+        for i in range(args.first_layer, args.last_layer+1):
+            test_classifier(layer=i, batch_size=args.batch_size, bottleneck=args.bottleneck, data_str=args.data, save_str=args.save)
