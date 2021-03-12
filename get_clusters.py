@@ -114,20 +114,21 @@ def get_clusters_from_generated_average(args, g_ema, device, mean_latent, t_dict
             sample_z = torch.randn(1, args.latent, device=device) 
             sample, activation_maps = g_ema([sample_z], truncation=args.truncation, truncation_latent=mean_latent, transform_dict_list=t_dict_list, return_activation_maps=True)
             for index, activations in enumerate(activation_maps):
-                true_index = index+1
-                classifier = FeatureClassifier(true_index)
-                classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
-                classifier_state_dict = torch.load(classifier_str)
-                classifier.load_state_dict(classifier_state_dict)
-                classifier.to(device)
-                layer_activation_maps = activation_maps[index]
-                a_map_array = list(torch.split(layer_activation_maps,1,1))
-                for j, map in enumerate(a_map_array):                  
-                    map = map.to(device)
-                    feat_vec, class_prob = classifier(map)
-                    normalised_feat_vec = feat_vec / args.num_samples
-                    latent_ll[index][j] = latent_ll[index][j] + normalised_feat_vec
-                    # feature_ll[index].append(j)
+                if index < args.n_layers:
+                    true_index = index+1
+                    classifier = FeatureClassifier(true_index)
+                    classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
+                    classifier_state_dict = torch.load(classifier_str)
+                    classifier.load_state_dict(classifier_state_dict)
+                    classifier.to(device)
+                    layer_activation_maps = activation_maps[index]
+                    a_map_array = list(torch.split(layer_activation_maps,1,1))
+                    for j, map in enumerate(a_map_array):                  
+                        map = map.to(device)
+                        feat_vec, class_prob = classifier(map)
+                        normalised_feat_vec = feat_vec / args.num_samples
+                        latent_ll[index][j] = latent_ll[index][j] + normalised_feat_vec
+                        # feature_ll[index].append(j)
         
         for i in tqdm(range(args.n_layers)):
             true_index = i+1
@@ -160,27 +161,28 @@ def get_clusters_from_latent(args, g_ema, device, mean_latent, t_dict_list, yaml
         print(len(activation_maps))
         feature_cluster_dict = {}
         for index, activations in enumerate(activation_maps):
-            true_index = index+1
-            classifier = FeatureClassifier(true_index)
-            classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
-            classifier_state_dict = torch.load(classifier_str)
-            classifier.load_state_dict(classifier_state_dict)
-            classifier.to(device)
-            layer_activation_maps = activation_maps[index]
-            a_map_array = list(torch.split(layer_activation_maps,1,1))
-            dict_list = []
-            latent_list = []
-            for i, map in enumerate(a_map_array):
-                map = map.to(device)
-                feat_vec, class_prob = classifier(map)
-                activation_dict = {"class_index": i, "feat_vec": feat_vec}
-                # dict_list.append(activation_dict)
-                latent_list.append(feat_vec)
-            cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_list), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
-            for i, id in enumerate(cluster_ids_x):
-                cluster_dict = {"feature_index": int(i), "cluster_index": int(id)}
-                dict_list.append(cluster_dict)
-            feature_cluster_dict[true_index] = dict_list
+                if index < args.n_layers:
+                    true_index = index+1
+                    classifier = FeatureClassifier(true_index)
+                    classifier_str = args.classifier_ckpts + "/" + str(true_index) + "/classifier" + str(true_index) + "_final.pt"
+                    classifier_state_dict = torch.load(classifier_str)
+                    classifier.load_state_dict(classifier_state_dict)
+                    classifier.to(device)
+                    layer_activation_maps = activation_maps[index]
+                    a_map_array = list(torch.split(layer_activation_maps,1,1))
+                    dict_list = []
+                    latent_list = []
+                    for i, map in enumerate(a_map_array):
+                        map = map.to(device)
+                        feat_vec, class_prob = classifier(map)
+                        activation_dict = {"class_index": i, "feat_vec": feat_vec}
+                        # dict_list.append(activation_dict)
+                        latent_list.append(feat_vec)
+                    cluster_ids_x, cluster_centers = kmeans(X=torch.stack(latent_list), num_clusters=cluster_layer_dict[true_index], distance='euclidean', device=torch.device('cuda'))
+                    for i, id in enumerate(cluster_ids_x):
+                        cluster_dict = {"feature_index": int(i), "cluster_index": int(id)}
+                        dict_list.append(cluster_dict)
+                    feature_cluster_dict[true_index] = dict_list
         with open(r'cluster_dict.yaml', 'w') as file:
             documents = yaml.dump(feature_cluster_dict, file)
             
