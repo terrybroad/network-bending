@@ -22,6 +22,18 @@ def create_layer_channel_dim_dict(channel_multiplier, n_layers=16):
     }
     return  {k: v for k, v in layer_channel_dict.items() if int(k) <= n_layers}
 
+def create_ablate_t_dict_list_from_layer_idx(layer, layer_channel_dict, indicies):
+    layer_dim = layer_channel_dict[layer]
+    t_dict_list = []
+    for index in indicies:
+        t_dict_list.append({
+            "layerID": layer,
+            "transformID": 'ablate',
+            "indicies": index,
+            "params": []
+        })
+    return t_dict_list
+
 def create_random_transform_dict(layer, layer_channel_dict, transform, params, percentage):
     layer_dim = layer_channel_dict[layer]
     num_samples = int( layer_dim * percentage )
